@@ -124,6 +124,54 @@ export const authAPI = {
     },
     accessToken: string
   ) {
+    try {
+      console.log("🚀 Attempting to create user via RPC 'create_confirmed_user':", data.email);
+      // Try to call the security definer RPC first
+      const { data: rpcData, error: rpcError } = await supabase.rpc("create_confirmed_user", {
+        user_email: data.email,
+        user_password: data.password,
+        user_name: data.name,
+        user_role: data.role,
+        user_class_id: data.role === "siswa" ? data.classId || null : null,
+      });
+
+      if (!rpcError && rpcData) {
+        if (rpcData.success) {
+          console.log("✅ User created successfully via RPC (Bypassed rate limit & confirmation email)");
+          
+          // Fetch the newly created profile to return
+          const { data: createdProfile, error: getProfileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", rpcData.user_id)
+            .single();
+
+          if (!getProfileError && createdProfile) {
+            return {
+              success: true,
+              user: createdProfile,
+              message: "User created successfully (RPC bypassed email).",
+            };
+          }
+        } else {
+          // If RPC returns custom error like "Username atau email sudah terdaftar."
+          throw new Error(rpcData.error || "Gagal membuat user.");
+        }
+      }
+
+      if (rpcError) {
+        console.warn("⚠️ RPC method not available or failed, falling back to standard signUp():", rpcError.message);
+      }
+    } catch (rpcCatchErr: any) {
+      // If it's a validation error (like email already exists), bubble it up
+      if (rpcCatchErr.message?.includes("sudah terdaftar") || rpcCatchErr.message?.includes("sudah digunakan")) {
+        throw rpcCatchErr;
+      }
+      console.warn("⚠️ RPC failed with catch, falling back to standard signUp():", rpcCatchErr.message);
+    }
+
+    // FALLBACK STRATEGY: Standard signUp
+    console.log("🔄 Calling standard supabase.auth.signUp() fallback...");
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -136,7 +184,30 @@ export const authAPI = {
       },
     });
 
-    if (signUpError) throw new Error(signUpError.message);
+    if (signUpError) {
+      console.error("❌ Standard signUp error:", signUpError);
+      
+      // Highly user-friendly Supabase email rate limit error handling
+      const isRateLimit = 
+        signUpError.message?.toLowerCase().includes("rate limit") ||
+        signUpError.message?.toLowerCase().includes("too many requests") ||
+        signUpError.status === 429;
+
+      if (isRateLimit) {
+        throw new Error(
+          "⚠️ Batas Limit Email Supabase Tercapai!\n\n" +
+          "Untuk melanjutkan pendaftaran sekolah tanpa dibatasi limit email:\n" +
+          "1. Buka Supabase Dashboard Anda (https://supabase.com)\n" +
+          "2. Masuk ke menu 'Authentication' -> 'Providers' -> 'Email'\n" +
+          "3. NONAKTIFKAN pilihan 'Confirm Email' (matikan checklist/switch)\n" +
+          "4. Simpan perubahan. Dengan mematikan Confirm Email, akun akan langsung aktif tanpa perlu konfirmasi email, bebas dari rate limit, dan tidak mengirim spam email.\n\n" +
+          "ATAU\n" +
+          "Jalankan file SQL 'create_confirmed_user.sql' yang sudah kami buat di root folder proyek Anda pada tab SQL Editor Supabase untuk mengaktifkan instant bypass."
+        );
+      }
+      
+      throw new Error(signUpError.message);
+    }
 
     const authUser = signUpData?.user;
     if (!authUser?.id) {

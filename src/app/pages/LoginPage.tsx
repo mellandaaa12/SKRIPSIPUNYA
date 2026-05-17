@@ -79,7 +79,7 @@ export default function LoginPage() {
       if (err.message?.includes("Invalid login credentials") || err.message?.includes("invalid_credentials")) {
         errorMessage = "⚠️ Username atau password salah. Silakan coba lagi.";
       } else if (err.message?.includes("Email not confirmed")) {
-        errorMessage = "⚠️ Email belum dikonfirmasi. Cek inbox Anda.";
+        errorMessage = "⚠️ Email belum dikonfirmasi. Cek inbox Anda. (Tips: Nonaktifkan 'Confirm Email' di Supabase Dashboard -> Authentication -> Providers -> Email agar login instan tanpa email confirmation).";
       } else if (err.message?.includes("User not found")) {
         errorMessage = "⚠️ Akun tidak ditemukan. Hubungi administrator.";
       } else {
@@ -200,6 +200,8 @@ export default function LoginPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "12px",
+                whiteSpace: "nowrap",
+                flexWrap: "nowrap",
               }}
             >
               <span className="text-brand-gradient">Selamat Datang!</span>
