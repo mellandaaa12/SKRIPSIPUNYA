@@ -239,20 +239,20 @@ export default function Dashboard() {
 
     pembelajaranList.forEach((pembelajaran: any) => {
       if (pembelajaran.steps && Array.isArray(pembelajaran.steps)) {
+        // Always use the full step list from pembelajaran as the total
+        totalSteps += pembelajaran.steps.length;
+
+        // Find matching progress entry for this pembelajaran
         const progress = progressData.find((p: any) => p.pembelajaranId === pembelajaran.id);
         if (progress && progress.steps) {
-          Object.keys(progress.steps).forEach((stepId: string) => {
-            totalSteps++;
-            if (progress.steps[stepId]?.completed) {
+          // Count each step from pembelajaran that has completed=true in progress
+          pembelajaran.steps.forEach((step: any) => {
+            if (progress.steps[step.id]?.completed) {
               completedSteps++;
             }
           });
-        } else {
-          // If no progress, count all steps as not completed
-          pembelajaran.steps.forEach(() => {
-            totalSteps++;
-          });
         }
+        // If no progress found, completedSteps for this pembelajaran stays 0
       }
     });
 

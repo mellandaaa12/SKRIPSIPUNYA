@@ -96,7 +96,7 @@ export default function CodeEditorSiswa() {
     if (!step) return 0;
     const checks: string[] = step.content?.requiredChecks || [];
     if (!checks.length) {
-      return currentCode.trim().length > 30 ? 80 : 40;
+      return currentCode.trim().length > 0 ? 100 : 0;
     }
     const passedChecks = checks.filter((needle) => currentCode.includes(needle)).length;
     return Math.round((passedChecks / checks.length) * 100);
