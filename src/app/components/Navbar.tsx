@@ -63,29 +63,12 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "auto" }}>
           <div style={{
-            width: "12px",
-            height: "12px",
-            borderRadius: "50%",
+            width: "32px",
+            height: "10px",
+            borderRadius: "50px",
             background: "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)",
-            boxShadow: "0 0 10px rgba(0, 180, 216, 0.6)",
+            boxShadow: "0 0 8px rgba(0, 180, 216, 0.4)",
           }} />
-          <span style={{
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 900,
-            fontSize: "1.3rem",
-            background: "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            letterSpacing: "-0.5px",
-            cursor: "pointer",
-          }}
-          onClick={() => {
-            const el = document.getElementById("hero");
-            if (el) el.scrollIntoView({ behavior: "smooth" });
-          }}
-          >
-            Study With Me
-          </span>
         </div>
 
         {/* Nav Links - Desktop */}
