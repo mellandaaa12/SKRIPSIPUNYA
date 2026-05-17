@@ -66,7 +66,6 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
               fontFamily: "Poppins, sans-serif", fontWeight: 900,
               fontSize: "clamp(2.8rem, 5.5vw, 4.5rem)",
               margin: "0 0 16px", lineHeight: 1.2, position: "relative", zIndex: 1, textAlign: "center",
-              color: "#1A1A2E",
               display: "flex",
               justifyContent: "center",
               flexWrap: "wrap",
@@ -90,6 +89,7 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
                     style={{ display: "inline-block" }}
                     animate={{
                       y: [0, -8, 0],
+                      color: ["#0077B6", "#00B4D8", "#6C42F5", "#FF6B9D", "#0077B6"],
                     }}
                     transition={{
                       y: {
@@ -97,6 +97,12 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
                         repeat: Infinity,
                         ease: "easeInOut",
                         delay: (wordIdx * 3 + charIdx) * 0.15,
+                      },
+                      color: {
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: (wordIdx * 3 + charIdx) * 0.1,
                       }
                     }}
                   >
