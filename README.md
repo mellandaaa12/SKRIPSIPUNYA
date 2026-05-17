@@ -1,4 +1,4 @@
-# 🎓 EduLearn LMS - Learning Management System
+# 🎓 Study With Me - Learning Management System
 
 **Platform Media Pembelajaran dengan Progressive Learning & Project-Based Learning (PJBL)**
 
@@ -11,7 +11,7 @@
 
 ## 🎯 Overview
 
-EduLearn adalah platform Learning Management System (LMS) yang dirancang khusus untuk pembelajaran berbasis proyek dengan sistem Progressive Learning dan monitoring manual oleh guru.
+Study With Me adalah platform Learning Management System (LMS) yang dirancang khusus untuk pembelajaran berbasis proyek dengan sistem Progressive Learning dan monitoring manual oleh guru.
 
 ### ✨ Key Features
 
@@ -63,7 +63,7 @@ EduLearn adalah platform Learning Management System (LMS) yang dirancang khusus 
      method: 'POST',
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({
-       name: 'Administrator',
+       name: 'Admin Study With Me',
        email: 'admin@sekolah.com',
        password: 'admin123456'
      })

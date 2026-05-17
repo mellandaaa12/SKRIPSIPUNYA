@@ -179,7 +179,7 @@ export default function KelolaGuru() {
     // Derive a clean, valid email from username
     const derivedEmail = username.includes("@")
       ? username
-      : `${username.toLowerCase().replace(/\s+/g, "")}@edulearn.com`;
+      : `${username.toLowerCase().replace(/\s+/g, "")}@studywithme.id`;
 
     try {
       setSaving(true);
@@ -456,7 +456,7 @@ export default function KelolaGuru() {
                           <div className="flex items-center gap-1.5">
                             <User className="w-3.5 h-3.5 text-[#64748B]" />
                             <p className="text-sm text-[#64748B]">
-                              {guru.email.includes("@edulearn.com") ? guru.email.split("@")[0] : guru.email}
+                              {guru.email.includes("@studywithme.id") || guru.email.includes("@edulearn.com") ? guru.email.split("@")[0] : guru.email}
                             </p>
                           </div>
                           {guru.className && (

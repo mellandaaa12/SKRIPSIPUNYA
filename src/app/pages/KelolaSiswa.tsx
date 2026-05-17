@@ -190,7 +190,7 @@ export default function KelolaSiswa() {
     // Derive a clean, valid email from username
     const derivedEmail = username.includes("@")
       ? username
-      : `${username.toLowerCase().replace(/\s+/g, "")}@edulearn.com`;
+      : `${username.toLowerCase().replace(/\s+/g, "")}@studywithme.id`;
 
     try {
       setSaving(true);
@@ -496,7 +496,7 @@ export default function KelolaSiswa() {
                             {siswa.name}
                           </h3>
                           <p className="text-sm text-[#64748B] mb-1">
-                            {siswa.email.includes("@edulearn.com") ? siswa.email.split("@")[0] : siswa.email}
+                            {siswa.email.includes("@studywithme.id") || siswa.email.includes("@edulearn.com") ? siswa.email.split("@")[0] : siswa.email}
                           </p>
                           {siswa.className && (
                             <div className="flex items-center gap-1.5">

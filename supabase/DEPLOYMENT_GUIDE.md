@@ -1,4 +1,4 @@
-# 🚀 Deployment Guide - EduLearn LMS Backend
+# 🚀 Deployment Guide - Study With Me Backend
 
 ## ✅ Status Perbaikan
 
@@ -96,7 +96,7 @@ curl https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server/auth/me \
 {
   "id": "uuid-here",
   "email": "admin@test.com",
-  "name": "Admin EduLearn",
+  "name": "Admin Study With Me",
   "role": "admin"
 }
 ```
@@ -247,5 +247,5 @@ Backend menggunakan emoji untuk easy scanning:
 
 **Last Updated:** March 8, 2026  
 **Backend Version:** 1.0  
-**Project:** EduLearn LMS  
+**Project:** Study With Me  
 **Status:** ✅ Ready to Deploy

@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (fallbackProfile?.email) {
             email = fallbackProfile.email;
           } else {
-            email = `${email.toLowerCase()}@edulearn.com`;
+            email = `${email.toLowerCase()}@studywithme.id`;
           }
         }
         console.log("✅ Resolved email:", email);
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Step 3: Clear all stale local storage items that might cause lock issues
       Object.keys(localStorage).forEach(key => {
-        if (key.includes('sb-') || key.includes('supabase') || key.includes('edulearn-auth')) {
+        if (key.includes('sb-') || key.includes('supabase') || key.includes('edulearn-auth') || key.includes('study-with-me-auth')) {
           localStorage.removeItem(key);
         }
       });

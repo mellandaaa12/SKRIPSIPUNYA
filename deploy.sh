@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🚀 Deploy Supabase Function - EduLearn LMS
+# 🚀 Deploy Supabase Function - Study With Me
 # This script deploys the backend function to Supabase
 
 set -e
@@ -18,7 +18,7 @@ FUNCTION_NAME="server"
 
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
-echo -e "${BLUE}  🚀 EduLearn LMS - Function Deployment${NC}"
+echo -e "${BLUE}  🚀 Study With Me - Function Deployment${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════${NC}"
 echo ""
 

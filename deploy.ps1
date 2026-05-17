@@ -1,4 +1,4 @@
-# 🚀 Deploy Supabase Function - EduLearn LMS
+# 🚀 Deploy Supabase Function - Study With Me
 # PowerShell script for Windows
 
 $PROJECT_REF = "tjfmwixttmrayvhqhena"
@@ -6,7 +6,7 @@ $FUNCTION_NAME = "server"
 
 Write-Host ""
 Write-Host "═══════════════════════════════════════════" -ForegroundColor Blue
-Write-Host "  🚀 EduLearn LMS - Function Deployment" -ForegroundColor Blue
+Write-Host "  🚀 Study With Me - Function Deployment" -ForegroundColor Blue
 Write-Host "═══════════════════════════════════════════" -ForegroundColor Blue
 Write-Host ""
 
