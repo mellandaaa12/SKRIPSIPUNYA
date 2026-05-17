@@ -53,7 +53,7 @@ function adaptQuestion(q: any) {
     penjelasan: explanation,
     originalId: q.id || null,
     originalText: questionText,
-    quizType: q.quizType || (questionText.includes(".......") ? "melengkapi_code" : "pilihan_ganda"),
+    quizType: q.quizType || ((/\.{3,}|_{3,}/.test(questionText) || (q.perintahCode && /\.{3,}|_{3,}/.test(q.perintahCode)) || (q.code && /\.{3,}|_{3,}/.test(q.code))) ? "melengkapi_code" : "pilihan_ganda"),
     code: q.code || "",
     perintahCode: q.perintahCode || "",
     hint: q.bantuan || q.hint || "",
@@ -114,7 +114,19 @@ export default function MengerjakanLatihan() {
 
       // Adapt questions format
       const rawSoal = currentStep?.content?.quiz?.soalList || currentStep?.questions || [];
-      setQuestions(rawSoal.map(adaptQuestion).filter(Boolean));
+      const adaptedQuestions = rawSoal.map(adaptQuestion).filter(Boolean);
+      setQuestions(adaptedQuestions);
+      if (adaptedQuestions.length > 0) {
+        const firstQ = adaptedQuestions[0];
+        if (firstQ.quizType === 'melengkapi_code') {
+          const codeBlanks = (firstQ.code?.match(/\.{3,}|_{3,}/g) || []).length;
+          const instructionBlanks = (firstQ.perintahCode?.match(/\.{3,}|_{3,}/g) || []).length;
+          const blankCount = codeBlanks > 0 ? codeBlanks : (instructionBlanks > 0 ? instructionBlanks : (firstQ.question.match(/\.{3,}|_{3,}/g) || []).length);
+          setFilledBlanks(Array(blankCount).fill(''));
+        } else {
+          setFilledBlanks([]);
+        }
+      }
 
       // Fetch user profile for hint_points
       const { data: profile } = await supabase.from('profiles').select('hint_points, exp, streak').eq('id', user.id).single();
@@ -214,7 +226,9 @@ export default function MengerjakanLatihan() {
       setShowHint(false);
       
       if (nextQ.quizType === 'melengkapi_code') {
-        const blankCount = (nextQ.question.match(/\.\.\.\.\.\.\./g) || []).length;
+        const codeBlanks = (nextQ.code?.match(/\.{3,}|_{3,}/g) || []).length;
+        const instructionBlanks = (nextQ.perintahCode?.match(/\.{3,}|_{3,}/g) || []).length;
+        const blankCount = codeBlanks > 0 ? codeBlanks : (instructionBlanks > 0 ? instructionBlanks : (nextQ.question.match(/\.{3,}|_{3,}/g) || []).length);
         setFilledBlanks(Array(blankCount).fill(''));
       } else {
         setFilledBlanks([]);
@@ -430,7 +444,43 @@ export default function MengerjakanLatihan() {
               </AnimatePresence>
               <AnimatePresence mode="wait">
                 <motion.div key={currentQIdx} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-                  <h2 className="font-bold text-2xl text-[#0077B6] mb-8 leading-relaxed">{currentQ?.question}</h2>
+                  {currentQ?.quizType === 'melengkapi_code' ? (
+                    <h2 className="font-bold text-2xl text-[#0077B6] mb-8 leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-2">
+                      {currentQ.question.split(/\.{3,}|_{3,}/).map((part: string, i: number, arr: any[]) => (
+                        <span key={i} className="inline-flex items-center gap-2 flex-wrap">
+                          <span>{part}</span>
+                          {i < arr.length - 1 && (
+                            <button
+                              onClick={() => {
+                                if (feedback) return;
+                                const optionToRemove = filledBlanks[i];
+                                if (!optionToRemove) return;
+                                
+                                const newFilled = [...filledBlanks];
+                                newFilled[i] = '';
+                                setFilledBlanks(newFilled);
+                                
+                                const optionIdx = currentQ.options.indexOf(optionToRemove);
+                                if (optionIdx !== -1) {
+                                  setSelectedOptionIndices(prev => prev.filter(idx => idx !== optionIdx));
+                                }
+                              }}
+                              className={`min-w-[120px] h-10 px-4 inline-flex items-center justify-center rounded-xl border-2 border-dashed transition-all font-mono text-base ${
+                                feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                filledBlanks[i] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105' :
+                                'border-[#CBD5E1] text-[#94A3B8] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                              }`}
+                            >
+                              {filledBlanks[i] || ""}
+                            </button>
+                          )}
+                        </span>
+                      ))}
+                    </h2>
+                  ) : (
+                    <h2 className="font-bold text-2xl text-[#0077B6] mb-8 leading-relaxed">{currentQ?.question}</h2>
+                  )}
                   
                   {/* Code Viewer inside Quiz */}
                   {currentQ?.code && (
@@ -444,15 +494,95 @@ export default function MengerjakanLatihan() {
                         <span className="text-[#94A3B8] text-[10px] font-bold tracking-wider uppercase font-mono">soal_code.html</span>
                       </div>
                       <div className="p-5 overflow-x-auto custom-scrollbar font-['Fira_Code','Courier_New',monospace]">
-                        <pre 
-                          className="font-mono text-sm leading-relaxed text-[#E2E8F0] whitespace-pre-wrap select-all m-0 bg-transparent p-0 border-0" 
-                          style={{ color: "#E2E8F0" }}
-                          dangerouslySetInnerHTML={{ __html: highlightCode(currentQ.code) }}
-                        />
+                        {(() => {
+                          const rawCode = currentQ.code || "";
+                          const hasBlanks = (rawCode.match(/\.{3,}|_{3,}/g) || []).length > 0;
+                          
+                          if (hasBlanks) {
+                            const highlighted = highlightCode(rawCode);
+                            const parts = highlighted.split(/(\.{3,}|_{3,})/g);
+                            let blankCounter = 0;
+                            
+                            return (
+                              <pre className="font-mono text-sm leading-relaxed text-[#E2E8F0] whitespace-pre-wrap select-all m-0 bg-transparent p-0 border-0" style={{ color: "#E2E8F0" }}>
+                                {parts.map((part, i) => {
+                                  const isBlank = part.match(/\.{3,}|_{3,}/);
+                                  if (isBlank) {
+                                    const currentBlankIdx = blankCounter;
+                                    blankCounter++;
+                                    return (
+                                      <button
+                                        key={i}
+                                        onClick={() => handleBlankClick(currentBlankIdx)}
+                                        className={`mx-1 min-w-[100px] h-8 px-3 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-mono text-sm ${
+                                          feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                          feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                          filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
+                                          'border-[#475569] text-[#64748B] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                                        }`}
+                                      >
+                                        {filledBlanks[currentBlankIdx] || ""}
+                                      </button>
+                                    );
+                                  } else {
+                                    return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
+                                  }
+                                })}
+                              </pre>
+                            );
+                          } else {
+                            return (
+                              <pre 
+                                className="font-mono text-sm leading-relaxed text-[#E2E8F0] whitespace-pre-wrap select-all m-0 bg-transparent p-0 border-0" 
+                                style={{ color: "#E2E8F0" }}
+                                dangerouslySetInnerHTML={{ __html: highlightCode(rawCode) }}
+                              />
+                            );
+                          }
+                        })()}
                       </div>
                       {currentQ?.perintahCode && (
-                        <div className="bg-[#1E293B] px-5 py-3 border-t border-[#334155]">
-                          <p className="text-xs text-[#94A3B8] italic font-semibold">{currentQ.perintahCode}</p>
+                        <div className="bg-[#1E293B] px-5 py-3 border-t border-[#334155] w-full">
+                           {(() => {
+                             const rawText = currentQ.perintahCode;
+                             const hasBlanks = (rawText.match(/\.{3,}|_{3,}/g) || []).length > 0;
+                             
+                             if (hasBlanks && currentQ.quizType === 'melengkapi_code') {
+                               const parts = rawText.split(/(\.{3,}|_{3,}/g);
+                               let blankCounter = 0;
+                               return (
+                                 <p className="text-xs text-[#94A3B8] font-semibold flex flex-wrap items-center gap-x-2 gap-y-1.5 leading-relaxed m-0">
+                                   {parts.map((part, i) => {
+                                     const isBlank = part.match(/\.{3,}|_{3,}/);
+                                     if (isBlank) {
+                                       const currentBlankIdx = blankCounter;
+                                       blankCounter++;
+                                       return (
+                                         <button
+                                           key={i}
+                                           onClick={() => handleBlankClick(currentBlankIdx)}
+                                           className={`mx-1 min-w-[90px] h-7 px-2.5 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-sans text-xs ${
+                                             feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                             feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                             filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
+                                             'border-[#475569] text-[#94A3B8] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                                           }`}
+                                         >
+                                           {filledBlanks[currentBlankIdx] || ""}
+                                         </button>
+                                       );
+                                     } else {
+                                       return <span key={i}>{part}</span>;
+                                     }
+                                   })}
+                                 </p>
+                               );
+                             } else {
+                               return (
+                                 <p className="text-xs text-[#94A3B8] italic font-semibold m-0">{rawText}</p>
+                               );
+                             }
+                           })()}
                         </div>
                       )}
                     </div>
@@ -479,53 +609,47 @@ export default function MengerjakanLatihan() {
                   )}
 
                   {currentQ.quizType === 'melengkapi_code' ? (
-                    <div className="space-y-8">
-                      <div className="flex flex-wrap items-center gap-3 justify-center mb-10">
-                        {currentQ.question.split('.......').map((part: string, i: number, arr: any[]) => (
-                          <div key={i} className="flex items-center gap-3">
-                            <span className="text-xl font-medium text-[#0077B6]">{part}</span>
-                            {i < arr.length - 1 && (
-                              <div className={`min-w-[100px] h-12 px-4 rounded-xl border-2 border-dashed flex items-center justify-center transition-all ${
-                                feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46]' :
-                                feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B]' :
-                                filledBlanks[i] ? 'bg-[#CAF0F8] border-[#0077B6] text-[#0077B6]' : 'border-[#CAF0F8]'
-                              }`}>
-                                {filledBlanks[i] || "___"}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap justify-center gap-3">
+                    <div className="space-y-8 mt-8">
+                      <div className="flex flex-wrap justify-center gap-4">
                         {currentQ.options.map((option: string, idx: number) => {
                           const isSelected = selectedOptionIndices.includes(idx);
                           return (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                if (feedback) return;
-                                if (isSelected) {
-                                  const newSelected = selectedOptionIndices.filter(i => i !== idx);
-                                  const newFilled = [...filledBlanks];
-                                  const fIdx = newFilled.indexOf(option);
-                                  if (fIdx !== -1) newFilled[fIdx] = '';
-                                  setSelectedOptionIndices(newSelected);
-                                  setFilledBlanks(newFilled);
-                                } else {
-                                  const bIdx = filledBlanks.findIndex(b => b === '');
-                                  if (bIdx !== -1) {
+                            <div key={idx} className="relative">
+                              {/* Placeholder beneath when selected (Duolingo style) */}
+                              <div className="absolute inset-0 bg-[#E2E8F0] rounded-2xl border-2 border-dashed border-[#CBD5E1] opacity-60 pointer-events-none flex items-center justify-center">
+                                <span className="text-transparent select-none text-sm font-bold">{option}</span>
+                              </div>
+                              
+                              <button
+                                onClick={() => {
+                                  if (feedback) return;
+                                  if (isSelected) {
+                                    const newSelected = selectedOptionIndices.filter(i => i !== idx);
                                     const newFilled = [...filledBlanks];
-                                    newFilled[bIdx] = option;
+                                    const fIdx = newFilled.indexOf(option);
+                                    if (fIdx !== -1) newFilled[fIdx] = '';
+                                    setSelectedOptionIndices(newSelected);
                                     setFilledBlanks(newFilled);
-                                    setSelectedOptionIndices([...selectedOptionIndices, idx]);
+                                  } else {
+                                    const bIdx = filledBlanks.findIndex(b => b === '');
+                                    if (bIdx !== -1) {
+                                      const newFilled = [...filledBlanks];
+                                      newFilled[bIdx] = option;
+                                      setFilledBlanks(newFilled);
+                                      setSelectedOptionIndices([...selectedOptionIndices, idx]);
+                                    }
                                   }
-                                }
-                              }}
-                              disabled={feedback !== null}
-                              className={`px-6 py-3 rounded-2xl font-bold transition-all ${isSelected ? 'bg-[#0077B6] text-white' : 'bg-white border-2 border-[#CAF0F8]'}`}
-                            >
-                              {option}
-                            </button>
+                                }}
+                                disabled={feedback !== null}
+                                className={`relative px-6 py-3.5 rounded-2xl text-sm font-bold transition-all shadow-sm ${
+                                  isSelected
+                                    ? "opacity-0 pointer-events-none translate-y-2 scale-95"
+                                    : "bg-white border-2 border-[#CAF0F8] text-[#0077B6] hover:border-[#0077B6] hover:-translate-y-1 hover:shadow-md active:scale-95"
+                                }`}
+                              >
+                                {option}
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -574,11 +698,11 @@ export default function MengerjakanLatihan() {
                     )}
                   </div>
                   {!feedback ? (
-                    <button onClick={handleCheckAnswer} disabled={selectedAnswer === null} className={`font-bold text-base py-3 px-10 rounded-full transition-all ${selectedAnswer === null ? 'bg-[#CAF0F8] text-[#94A3B8] cursor-not-allowed' : 'bg-[#46BD84] text-white shadow-[0_4px_0_#16A34A] hover:translate-y-1 hover:shadow-[0_2px_0_#16A34A]'}`}>
+                    <button onClick={handleCheckAnswer} disabled={selectedAnswer === null} className={`font-bold text-base py-3 px-10 min-w-[180px] rounded-full transition-all ${selectedAnswer === null ? 'bg-[#CAF0F8] text-[#94A3B8] cursor-not-allowed' : 'bg-[#46BD84] text-white shadow-[0_4px_0_#16A34A] hover:translate-y-1 hover:shadow-[0_2px_0_#16A34A]'}`}>
                       Periksa
                     </button>
                   ) : (
-                    <button onClick={handleNextOrSubmit} disabled={submitting} className={`font-bold text-base py-3 px-10 rounded-full transition-all text-white hover:translate-y-1 ${feedback === 'correct' ? 'bg-[#16A34A] shadow-[0_4px_0_#15803D]' : 'bg-[#EF4444] shadow-[0_4px_0_#B91C1C]'} hover:shadow-[0_2px_0_rgba(0,0,0,0.2)]`}>
+                    <button onClick={handleNextOrSubmit} disabled={submitting} className={`font-bold text-base py-3 px-10 min-w-[180px] rounded-full transition-all text-white hover:translate-y-1 ${feedback === 'correct' ? 'bg-[#16A34A] shadow-[0_4px_0_#15803D]' : 'bg-[#EF4444] shadow-[0_4px_0_#B91C1C]'} hover:shadow-[0_2px_0_rgba(0,0,0,0.2)]`}>
                       {submitting ? <Loader className="w-5 h-5 animate-spin" /> : currentQIdx < questions.length - 1 ? "Lanjut →" : "Selesai ✓"}
                     </button>
                   )}

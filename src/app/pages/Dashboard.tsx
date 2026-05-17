@@ -509,11 +509,24 @@ export default function Dashboard() {
                 <div className="absolute top-[12px] left-[5%] right-[5%] h-[2px] border-t-2 border-dashed border-[#EF4444]/50 z-0"></div>
                 
                 {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day, idx) => {
-                  const currentStreakMod = (user?.streak || 0) % 7;
-                  const isClaimed = streakClaimedToday 
-                    ? idx <= currentStreakMod - 1 || (currentStreakMod === 0 && idx <= 6)
-                    : idx < currentStreakMod;
-                  const isCurrent = !streakClaimedToday && idx === currentStreakMod;
+                  const todayJsDay = new Date().getDay();
+                  const todayIdx = todayJsDay === 0 ? 6 : todayJsDay - 1; // 0 = Mon, 6 = Sun
+                  
+                  const isCurrent = !streakClaimedToday && idx === todayIdx;
+                  
+                  let isClaimed = false;
+                  const streakCount = user?.streak || 0;
+                  
+                  if (idx === todayIdx) {
+                    isClaimed = streakClaimedToday;
+                  } else if (idx < todayIdx) {
+                    const daysAgo = todayIdx - idx;
+                    isClaimed = streakClaimedToday 
+                      ? daysAgo < streakCount 
+                      : daysAgo <= streakCount;
+                  } else {
+                    isClaimed = false;
+                  }
 
                   return (
                     <div key={day} className="flex flex-col items-center relative z-10 gap-1.5 w-8">

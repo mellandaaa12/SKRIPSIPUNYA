@@ -246,15 +246,15 @@ export default function DetailMateriGuru() {
           font-size: 14px;
           line-height: 1.75;
         }
-        .materi-content * {
+        .materi-content *:not(pre):not(pre *) {
           color: #000000 !important;
         }
-        .materi-content *[style] {
+        .materi-content *[style]:not(pre):not(pre *) {
           color: #000000 !important;
         }
         .materi-content p,
-        .materi-content span,
-        .materi-content div:not([class*="bg-"]),
+        .materi-content span:not(pre *),
+        .materi-content div:not([class*="bg-"]):not(pre *),
         .materi-content li,
         .materi-content td,
         .materi-content th,
@@ -266,33 +266,35 @@ export default function DetailMateriGuru() {
         .materi-content h6 {
           color: #000000 !important;
         }
-        .materi-content strong,
-        .materi-content b {
+        .materi-content strong:not(pre *),
+        .materi-content b:not(pre *) {
           color: #000000 !important;
         }
-        .materi-content em,
-        .materi-content i {
+        .materi-content em:not(pre *),
+        .materi-content i:not(pre *) {
           color: #000000 !important;
         }
         .materi-content a {
           color: #56B6C6 !important;
         }
-        .materi-content code {
-          color: #000000 !important;
-          background-color: #F1F5F9;
+        .materi-content code:not(pre code) {
+          color: #0f172a !important;
+          background-color: #F1F5F9 !important;
           padding: 2px 4px;
           border-radius: 4px;
         }
         .materi-content pre {
-          color: #000000 !important;
-          background-color: #F8FAFC;
+          color: #e2e8f0 !important;
+          background-color: #0F172A !important;
           padding: 16px;
           border-radius: 8px;
-          border: 1px solid #E2E8F0;
+          border: 1px solid #334155 !important;
+          overflow-x: auto;
         }
         .materi-content pre code {
-          background-color: transparent;
-          padding: 0;
+          background-color: transparent !important;
+          color: #e2e8f0 !important;
+          padding: 0 !important;
         }
         .materi-content blockquote {
           color: #000000 !important;

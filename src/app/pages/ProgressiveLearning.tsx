@@ -63,7 +63,7 @@ export default function ProgressiveLearning() {
 
   const codeIframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Force black color on materi content when modal opens
+  // Force correct color on materi content elements when modal opens
   useEffect(() => {
     if (showMateriModal) {
       setTimeout(() => {
@@ -71,7 +71,19 @@ export default function ProgressiveLearning() {
         if (wrapper) {
           const allElements = wrapper.querySelectorAll('*');
           allElements.forEach((el) => {
-            (el as HTMLElement).style.color = '#000000';
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.closest('pre')) {
+              // Keep original syntax highlighting colors!
+              if (!htmlEl.style.color) {
+                htmlEl.style.color = '#e2e8f0';
+              }
+            } else if (htmlEl.tagName === 'CODE' || htmlEl.closest('code')) {
+              if (!htmlEl.style.color) {
+                htmlEl.style.color = '#0f172a';
+              }
+            } else {
+              htmlEl.style.color = '#000000';
+            }
           });
         }
       }, 100);
@@ -298,7 +310,10 @@ export default function ProgressiveLearning() {
 
       // Heuristic for quizType if missing
       if (!type) {
-        type = questionText.includes(".......") ? "melengkapi_code" : "pilihan_ganda";
+        const hasBlanksInQuestion = /\.{3,}|_{3,}/.test(questionText);
+        const hasBlanksInInstruction = q.perintahCode && /\.{3,}|_{3,}/.test(q.perintahCode);
+        const hasBlanksInCode = q.code && /\.{3,}|_{3,}/.test(q.code);
+        type = (hasBlanksInQuestion || hasBlanksInInstruction || hasBlanksInCode) ? "melengkapi_code" : "pilihan_ganda";
       }
 
       return {
@@ -337,7 +352,9 @@ export default function ProgressiveLearning() {
     } else {
       setSelectedOptionIndices([]);
       if (firstQ.quizType === 'melengkapi_code') {
-        const blankCount = (firstQ.question.match(/\.\.\.\.\.\.\./g) || []).length;
+        const codeBlanks = (firstQ.code?.match(/\.{3,}|_{3,}/g) || []).length;
+        const instructionBlanks = (firstQ.perintahCode?.match(/\.{3,}|_{3,}/g) || []).length;
+        const blankCount = codeBlanks > 0 ? codeBlanks : (instructionBlanks > 0 ? instructionBlanks : (firstQ.question.match(/\.{3,}|_{3,}/g) || []).length);
         setFilledBlanks(Array(blankCount).fill(''));
       } else {
         setFilledBlanks([]);
@@ -465,7 +482,9 @@ export default function ProgressiveLearning() {
       
       // Initialize blanks correctly for the next question
       if (nextQ.quizType === 'melengkapi_code') {
-        const blankCount = (nextQ.question.match(/\.\.\.\.\.\.\./g) || []).length;
+        const codeBlanks = (nextQ.code?.match(/\.{3,}|_{3,}/g) || []).length;
+        const instructionBlanks = (nextQ.perintahCode?.match(/\.{3,}|_{3,}/g) || []).length;
+        const blankCount = codeBlanks > 0 ? codeBlanks : (instructionBlanks > 0 ? instructionBlanks : (nextQ.question.match(/\.{3,}|_{3,}/g) || []).length);
         setFilledBlanks(Array(blankCount).fill(''));
       } else {
         setFilledBlanks([]);
@@ -808,15 +827,15 @@ export default function ProgressiveLearning() {
           font-size: 14px;
           line-height: 1.75;
         }
-        .materi-content * {
+        .materi-content *:not(pre):not(pre *) {
           color: #000000 !important;
         }
-        .materi-content *[style] {
+        .materi-content *[style]:not(pre):not(pre *) {
           color: #000000 !important;
         }
         .materi-content p,
-        .materi-content span,
-        .materi-content div:not([class*="bg-"]),
+        .materi-content span:not(pre *),
+        .materi-content div:not([class*="bg-"]):not(pre *),
         .materi-content li,
         .materi-content td,
         .materi-content th,
@@ -828,33 +847,35 @@ export default function ProgressiveLearning() {
         .materi-content h6 {
           color: #000000 !important;
         }
-        .materi-content strong,
-        .materi-content b {
+        .materi-content strong:not(pre *),
+        .materi-content b:not(pre *) {
           color: #000000 !important;
         }
-        .materi-content em,
-        .materi-content i {
+        .materi-content em:not(pre *),
+        .materi-content i:not(pre *) {
           color: #000000 !important;
         }
         .materi-content a {
           color: #0077B6 !important;
         }
-        .materi-content code {
-          color: #000000 !important;
-          background-color: #F1F5F9;
+        .materi-content code:not(pre code) {
+          color: #0f172a !important;
+          background-color: #F1F5F9 !important;
           padding: 2px 4px;
           border-radius: 4px;
         }
         .materi-content pre {
-          color: #000000 !important;
-          background-color: #F8FAFC;
+          color: #e2e8f0 !important;
+          background-color: #0F172A !important;
           padding: 16px;
           border-radius: 8px;
-          border: 1px solid #E2E8F0;
+          border: 1px solid #334155 !important;
+          overflow-x: auto;
         }
         .materi-content pre code {
-          background-color: transparent;
-          padding: 0;
+          background-color: transparent !important;
+          color: #e2e8f0 !important;
+          padding: 0 !important;
         }
         .materi-content blockquote {
           color: #000000 !important;
@@ -1389,7 +1410,32 @@ export default function ProgressiveLearning() {
                       <span className="text-white font-bold text-sm">{currentQIdx + 1}</span>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-[#0077B6] leading-snug">{questions[currentQIdx]?.question}</h3>
+                      {questions[currentQIdx]?.quizType === 'melengkapi_code' ? (
+                        <h3 className="text-2xl font-bold text-[#0077B6] leading-snug flex flex-wrap items-center gap-x-2 gap-y-2">
+                          {questions[currentQIdx]?.question.split(/\.{3,}|_{3,}/).map((part: string, i: number, arr: any[]) => (
+                            <span key={i} className="inline-flex items-center gap-2 flex-wrap">
+                              <span>{part}</span>
+                              {i < arr.length - 1 && (
+                                <button
+                                  onClick={() => !isQuizPreviewMode && handleBlankClick(i)}
+                                  disabled={isQuizPreviewMode}
+                                  className={`min-w-[120px] h-10 px-4 inline-flex items-center justify-center rounded-xl border-2 border-dashed transition-all font-mono text-base ${
+                                    isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                    feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                    feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                    filledBlanks[i] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
+                                    'border-[#CBD5E1] text-[#94A3B8] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                                  }`}
+                                >
+                                  {filledBlanks[i] || ""}
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </h3>
+                      ) : (
+                        <h3 className="text-2xl font-bold text-[#0077B6] leading-snug">{questions[currentQIdx]?.question}</h3>
+                      )}
                       <p className="text-sm text-[#64748B] mt-1">Perhatikan soal dan pilih jawaban yang tepat.</p>
                     </div>
                   </div>
@@ -1406,14 +1452,98 @@ export default function ProgressiveLearning() {
                         <span className="text-[#94A3B8] text-xs font-semibold tracking-wider uppercase">index.html</span>
                       </div>
                       <div className="bg-[#0F172A] px-6 py-6">
-                        <pre className="font-mono text-base leading-relaxed text-[#E2E8F0] whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: highlightHTML(questions[currentQIdx]?.code || quizStep.content.taskExample) }} />
+                        {(() => {
+                          const rawCode = questions[currentQIdx]?.code || "";
+                          const hasBlanks = (rawCode.match(/\.{3,}|_{3,}/g) || []).length > 0;
+                          
+                          if (hasBlanks) {
+                            const highlighted = highlightHTML(rawCode);
+                            const parts = highlighted.split(/(\.{3,}|_{3,})/g);
+                            let blankCounter = 0;
+                            
+                            return (
+                              <pre className="font-mono text-base leading-relaxed text-[#E2E8F0] whitespace-pre-wrap">
+                                {parts.map((part, i) => {
+                                  const isBlank = part.match(/\.{3,}|_{3,}/);
+                                  if (isBlank) {
+                                    const currentBlankIdx = blankCounter;
+                                    blankCounter++;
+                                    return (
+                                      <button
+                                        key={i}
+                                        onClick={() => !isQuizPreviewMode && handleBlankClick(currentBlankIdx)}
+                                        disabled={isQuizPreviewMode}
+                                        className={`mx-1 min-w-[100px] h-8 px-3 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-mono text-sm ${
+                                          isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                          feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                          feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                          filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
+                                          'border-[#475569] text-[#64748B] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                                        }`}
+                                      >
+                                        {filledBlanks[currentBlankIdx] || ""}
+                                      </button>
+                                    );
+                                  } else {
+                                    return <span key={i} dangerouslySetInnerHTML={{ __html: part }} />;
+                                  }
+                                })}
+                              </pre>
+                            );
+                          } else {
+                            return (
+                              <pre className="font-mono text-base leading-relaxed text-[#E2E8F0] whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: highlightHTML(rawCode || quizStep.content?.taskExample || "") }} />
+                            );
+                          }
+                        })()}
                       </div>
                       {questions[currentQIdx]?.perintahCode && (
-                        <div className="bg-[#F0F9FF] px-6 py-4 border-t border-[#BAE6FD] flex items-start gap-3">
+                        <div className="bg-[#F0F9FF] px-6 py-4 border-t border-[#BAE6FD] flex items-start gap-3 w-full">
                            <div className="w-6 h-6 rounded-full bg-[#0077B6] flex items-center justify-center flex-shrink-0 mt-0.5">
                              <Sparkles className="w-3.5 h-3.5 text-white" />
                            </div>
-                           <p className="text-sm font-bold text-[#0369A1]">{questions[currentQIdx].perintahCode}</p>
+                           {(() => {
+                             const rawText = questions[currentQIdx].perintahCode;
+                             const hasBlanks = (rawText.match(/\.{3,}|_{3,}/g) || []).length > 0;
+                             
+                             if (hasBlanks && questions[currentQIdx].quizType === 'melengkapi_code') {
+                               const parts = rawText.split(/(\.{3,}|_{3,})/g);
+                               let blankCounter = 0;
+                               return (
+                                 <p className="text-sm font-bold text-[#0369A1] flex flex-wrap items-center gap-x-2 gap-y-1.5 leading-relaxed m-0">
+                                   {parts.map((part, i) => {
+                                     const isBlank = part.match(/\.{3,}|_{3,}/);
+                                     if (isBlank) {
+                                       const currentBlankIdx = blankCounter;
+                                       blankCounter++;
+                                       return (
+                                         <button
+                                           key={i}
+                                           onClick={() => !isQuizPreviewMode && handleBlankClick(currentBlankIdx)}
+                                           disabled={isQuizPreviewMode}
+                                           className={`mx-1 min-w-[90px] h-7 px-2.5 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-sans text-xs ${
+                                             isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                             feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
+                                             feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
+                                             filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
+                                             'border-[#0077B6]/30 text-[#0077B6] hover:border-[#0077B6] hover:bg-[#CAF0F8]/20'
+                                           }`}
+                                         >
+                                           {filledBlanks[currentBlankIdx] || ""}
+                                         </button>
+                                       );
+                                     } else {
+                                       return <span key={i}>{part}</span>;
+                                     }
+                                   })}
+                                 </p>
+                               );
+                             } else {
+                               return (
+                                 <p className="text-sm font-bold text-[#0369A1] m-0">{rawText}</p>
+                               );
+                             }
+                           })()}
                         </div>
                       )}
                     </div>
@@ -1454,56 +1584,32 @@ export default function ProgressiveLearning() {
                   {/* Question Content based on Type */}
                   <div className="mt-4">
                     {questions[currentQIdx].quizType === 'melengkapi_code' ? (
-                      /* Fill in the Blanks UI */
-                      <div className="space-y-8">
-                        <div className="bg-[#1E293B] rounded-t-2xl px-5 py-3 mb-0">
-                          <span className="text-[#94A3B8] text-xs font-semibold tracking-[0.15em] uppercase">Lengkapi Bagian Kosong:</span>
-                        </div>
-                        <div className="bg-[#0F172A] rounded-b-2xl px-5 py-6 mb-6">
-                          <div className="flex flex-wrap items-center gap-3 justify-center">
-                            {questions[currentQIdx].question.split('.......').map((part: string, i: number, arr: any[]) => (
-                              <div key={i} className="flex items-center gap-3">
-                                <span className="text-lg font-mono text-[#E2E8F0]">{part}</span>
-                                {i < arr.length - 1 && (
-                                  <button
-                                    onClick={() => !isQuizPreviewMode && handleBlankClick(i)}
-                                    disabled={isQuizPreviewMode}
-                                    className={`min-w-[100px] h-10 px-4 rounded-lg border-2 border-dashed flex items-center justify-center transition-all font-mono text-sm ${
-                                      isQuizPreviewMode ? 'bg-[#334155] border-[#00B4D8] text-[#00B4D8] font-bold' :
-                                      feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold' :
-                                      feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold' :
-                                      filledBlanks[i] ? 'bg-[#334155] border-[#67E8F9] text-[#67E8F9] font-bold' :
-                                      'border-[#475569] text-[#475569] hover:border-[#64748B]'
-                                    }`}
-                                  >
-                                    {filledBlanks[i] || "___"}
-                                  </button>
-                                )}
+                      /* Fill in the Blanks Options (Duolingo style word bank) */
+                      <div className="flex flex-wrap justify-center gap-4 mt-8">
+                        {questions[currentQIdx].options.map((option: string, idx: number) => {
+                          const isSelected = selectedOptionIndices.includes(idx);
+                          return (
+                            <div key={idx} className="relative">
+                              {/* Placeholder beneath when selected */}
+                              <div className="absolute inset-0 bg-[#E2E8F0] rounded-2xl border-2 border-dashed border-[#CBD5E1] opacity-60 pointer-events-none flex items-center justify-center">
+                                <span className="text-transparent select-none text-sm font-bold">{option}</span>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Tiles */}
-                        <div className="flex flex-wrap justify-center gap-3">
-                          {questions[currentQIdx].options.map((option: string, idx: number) => {
-                            const isSelected = selectedOptionIndices.includes(idx);
-                            return (
+                              
                               <button
                                 key={idx}
                                 onClick={() => !isQuizPreviewMode && handleOptionClick(idx)}
-                                disabled={isQuizPreviewMode || feedback !== null || (isSelected && filledBlanks.every(b => b !== option))}
-                                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-sm ${
+                                disabled={isQuizPreviewMode || feedback !== null}
+                                className={`relative px-6 py-3.5 rounded-2xl text-sm font-bold transition-all shadow-sm ${
                                   isSelected
-                                    ? "bg-[#CAF0F8] text-[#0077B6] cursor-not-allowed scale-95"
+                                    ? "opacity-0 pointer-events-none translate-y-2 scale-95"
                                     : "bg-white border-2 border-[#CAF0F8] text-[#0077B6] hover:border-[#0077B6] hover:-translate-y-1 hover:shadow-md active:scale-95"
                                 }`}
                               >
                                 {option}
                               </button>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       /* Pilihan Ganda UI */
@@ -1604,7 +1710,7 @@ export default function ProgressiveLearning() {
                           ? (filledBlanks.length === 0 || filledBlanks.some(b => b === ''))
                           : selectedOptionIndices.length === 0
                       }
-                      className={`min-w-[200px] py-4 rounded-full font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
+                      className={`min-w-[320px] py-4 rounded-full font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${
                         !(questions[currentQIdx]?.quizType === 'melengkapi_code'
                           ? (filledBlanks.length === 0 || filledBlanks.some(b => b === ''))
                           : selectedOptionIndices.length === 0)
@@ -1638,7 +1744,7 @@ export default function ProgressiveLearning() {
 
       {/* Hint Confirmation Modal */}
       {showHintConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowHintConfirm(false)} />
           <div className="relative bg-white rounded-[2rem] p-6 max-w-sm w-full shadow-2xl text-center">
             <div className="w-16 h-16 rounded-full bg-[#FEF9C3] flex items-center justify-center mx-auto mb-4">
