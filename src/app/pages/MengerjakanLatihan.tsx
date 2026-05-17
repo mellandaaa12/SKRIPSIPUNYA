@@ -548,7 +548,7 @@ export default function MengerjakanLatihan() {
                              const hasBlanks = (rawText.match(/\.{3,}|_{3,}/g) || []).length > 0;
                              
                              if (hasBlanks && currentQ.quizType === 'melengkapi_code') {
-                               const parts = rawText.split(/(\.{3,}|_{3,}/g);
+                               const parts = rawText.split(/(\.{3,}|_{3,})/g);
                                let blankCounter = 0;
                                return (
                                  <p className="text-xs text-[#94A3B8] font-semibold flex flex-wrap items-center gap-x-2 gap-y-1.5 leading-relaxed m-0">
