@@ -186,38 +186,19 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
             style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "32px" }}
           >
-            <div style={{ textAlign: "center" }}>
-                <motion.h1
-                  animate={{ backgroundPosition: ["0% 50%", "50% 50%", "100% 50%"] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    fontWeight: 900,
-                    fontSize: "3.8rem",
-                    margin: "0 0 8px",
-                    letterSpacing: "-0.5px",
-                    color: "#1E293B",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  <span className="text-brand-gradient">Study With Me</span>
-                </motion.h1>
-            </div>
-
             <motion.h2
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               style={{
                 fontFamily: "Poppins, sans-serif",
-                fontWeight: 800,
-                fontSize: "3.2rem",
-                color: "#1E293B",
-                margin: "0 0 32px",
+                fontWeight: 900,
+                fontSize: "3.5rem",
+                margin: "0 0 24px",
                 lineHeight: 1.2,
                 textAlign: "center",
               }}
             >
-              Selamat Datang! 👋
+              <span className="text-brand-gradient">Selamat Datang! 👋</span>
             </motion.h2>
             <motion.p
               animate={{ opacity: [0.6, 1, 0.6] }}
