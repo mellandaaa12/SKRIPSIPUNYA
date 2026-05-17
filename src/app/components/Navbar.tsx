@@ -30,7 +30,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
     { label: "Tentang", id: "about" },
   ];
 
-  const navBg = "#0077B6";
+  const navBg = "#00B4D8";
 
   const linkColor = "#FFFFFF";
 
@@ -46,9 +46,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         background: navBg,
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
-        borderBottom: scrolled
-          ? "1px solid rgba(0, 180, 216, 0.18)"
-          : "none",
+        borderBottom: "none",
       }}
     >
       <div
@@ -64,15 +62,6 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "auto" }}>
-          <span style={{
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 900,
-            fontSize: "1.4rem",
-            color: "#FFFFFF",
-            letterSpacing: "-0.5px"
-          }}>
-            Study With Me
-          </span>
         </div>
 
         {/* Nav Links - Desktop */}

@@ -50,14 +50,63 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
             🚀 Siap Memulai?
           </span>
           <motion.h1
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.08,
+                  delayChildren: 0.2,
+                }
+              }
+            }}
             style={{
-              fontFamily: "Poppins, sans-serif", fontWeight: 800,
+              fontFamily: "Poppins, sans-serif", fontWeight: 900,
               fontSize: "clamp(2.8rem, 5.5vw, 4.5rem)",
               margin: "0 0 16px", lineHeight: 1.2, position: "relative", zIndex: 1, textAlign: "center",
               color: "#1A1A2E",
+              display: "flex",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              rowGap: "0.5rem",
             }}
           >
-            Study With Me
+            {"Study With Me".split(" ").map((word, wordIdx) => (
+              <span key={wordIdx} style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+                {Array.from(word).map((char, charIdx) => (
+                  <motion.span
+                    key={charIdx}
+                    variants={{
+                      hidden: { opacity: 0, y: 30, scale: 0.8 },
+                      visible: { 
+                        opacity: 1, 
+                        y: 0, 
+                        scale: 1,
+                        transition: { type: "spring", damping: 10, stiffness: 100 }
+                      }
+                    }}
+                    style={{ display: "inline-block" }}
+                    animate={{
+                      y: [0, -8, 0],
+                    }}
+                    transition={{
+                      y: {
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: (wordIdx * 3 + charIdx) * 0.15,
+                      }
+                    }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+                {/* Add spacing after each word except the last one */}
+                {wordIdx < 2 && <span style={{ display: "inline-block", width: "0.25em" }}>&nbsp;</span>}
+              </span>
+            ))}
           </motion.h1>
           <p style={{
             color: "#4A4A6A",
