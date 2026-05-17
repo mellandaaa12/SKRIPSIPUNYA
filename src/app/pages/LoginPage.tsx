@@ -196,9 +196,27 @@ export default function LoginPage() {
                 margin: "0 0 24px",
                 lineHeight: 1.2,
                 textAlign: "center",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "12px",
               }}
             >
-              <span className="text-brand-gradient">Selamat Datang! 👋</span>
+              <span className="text-brand-gradient">Selamat Datang!</span>
+              <motion.span
+                animate={{ rotate: [0, 16, -16, 16, 0] }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                style={{
+                  display: "inline-block",
+                  transformOrigin: "bottom right",
+                }}
+              >
+                👋
+              </motion.span>
             </motion.h2>
             <motion.p
               animate={{ opacity: [0.6, 1, 0.6] }}
