@@ -1,0 +1,67 @@
+# Supabase Configuration
+# Project: EduLearn LMS
+# Project ID: tjfmwixttmrayvhqhena
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 54325
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+jwt_expiry = 3600
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = false
+enable_confirmations = false
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[functions.backend]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/backend/index.ts"
+
+[functions.make-server]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/make-server/index.ts"
+
+[functions.api-backend]
+enabled = true
+verify_jwt = false
+import_map = "./functions/api-backend/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/api-backend/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/api-backend/*.html" ]

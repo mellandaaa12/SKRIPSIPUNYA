@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple CORS Test</title>
+</head>
+<body>
+    <h1>Simple CORS Test</h1>
+    <button onclick="testDirectAPI()">Test Direct API (No Auth)</button>
+    <button onclick="testCreateAPI()">Test Create API (No Auth)</button>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5174/functions/v1/backend';
+
+        async function testDirectAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/classes`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>Direct API (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testCreateAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/classes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Simple Test ' + Date.now(),
+                        grade: '10',
+                        subject: 'Test'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>Create API (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

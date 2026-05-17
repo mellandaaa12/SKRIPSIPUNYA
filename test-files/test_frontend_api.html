@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend API Test</title>
+</head>
+<body>
+    <h1>Frontend API Test</h1>
+    <button onclick="testLogin()">Login Admin</button>
+    <button onclick="testGetClasses()">Get Classes</button>
+    <button onclick="testCreateClass()">Create Class</button>
+    <button onclick="testGetClassesAfterCreate()">Refresh Classes</button>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5174/functions/v1/backend';
+        let accessToken = null;
+
+        async function testLogin() {
+            try {
+                const response = await fetch('https://tjfmwixttmrayvhqhena.supabase.co/auth/v1/token?grant_type=password', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqZm13aXh0dG1yYXl2aHFoZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDkxNDIsImV4cCI6MjA4ODEyNTE0Mn0.GcwxTKQAxvKgMRo9FIYS-Im8eW-qxN8UNIOTr4Oi_Ek',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@learning.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    accessToken = data.access_token;
+                    document.getElementById('result').innerHTML = `
+                        <p>Login successful!</p>
+                        <pre>Token: ${accessToken.substring(0, 50)}...</pre>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `<p>Login failed: ${data.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGetClasses() {
+            if (!accessToken) {
+                document.getElementById('result').innerHTML = '<p>Please login first</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/classes`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>Get Classes (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testCreateClass() {
+            if (!accessToken) {
+                document.getElementById('result').innerHTML = '<p>Please login first</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/classes`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Test Class ' + Date.now(),
+                        grade: '10',
+                        subject: 'Test Subject'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>Create Class (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testGetClassesAfterCreate() {
+            // Wait a bit then refresh
+            setTimeout(testGetClasses, 500);
+        }
+    </script>
+</body>
+</html>

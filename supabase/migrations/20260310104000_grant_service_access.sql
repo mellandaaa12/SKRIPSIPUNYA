@@ -1,0 +1,34 @@
+-- Grant service role access to all tables
+-- This is needed because RLS is enabled
+
+-- First, disable RLS on all tables temporarily to allow service role access
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE classes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE pembelajaran DISABLE ROW LEVEL SECURITY;
+ALTER TABLE pembelajaran_steps DISABLE ROW LEVEL SECURITY;
+ALTER TABLE quiz_questions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
+ALTER TABLE project_sintaks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE project_groups DISABLE ROW LEVEL SECURITY;
+ALTER TABLE project_group_members DISABLE ROW LEVEL SECURITY;
+ALTER TABLE project_submissions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE student_progress DISABLE ROW LEVEL SECURITY;
+ALTER TABLE student_progress_steps DISABLE ROW LEVEL SECURITY;
+ALTER TABLE quiz_attempts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE todos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE schedules DISABLE ROW LEVEL SECURITY;
+ALTER TABLE forum_posts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE forum_comments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE forum_likes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE file_uploads DISABLE ROW LEVEL SECURITY;
+
+-- Grant all permissions to the service role
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO postgres;
+
+-- Also grant to anon and authenticated roles for regular access
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    <button onclick="testDirectAPI()">Test Direct API</button>
+    <button onclick="testWithToken()">Test With Token</button>
+    <div id="result"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://tjfmwixttmrayvhqhena.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqZm13aXh0dG1yYXl2aHFoZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDkxNDIsImV4cCI6MjA4ODEyNTE0Mn0.GcwxTKQAxvKgMRo9FIYS-Im8eW-qxN8UNIOTr4Oi_Ek';
+        
+        async function testDirectAPI() {
+            try {
+                // Test direct Supabase REST API
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/classes?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>Direct API Response (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testWithToken() {
+            try {
+                // Get admin token first
+                const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@learning.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const authData = await authResponse.json();
+                if (!authResponse.ok) {
+                    document.getElementById('result').innerHTML = `<p>Auth failed: ${authData.error}</p>`;
+                    return;
+                }
+                
+                // Test API with admin token
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/classes?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${authData.access_token}`
+                    }
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <p>API with Admin Token (${response.status}):</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

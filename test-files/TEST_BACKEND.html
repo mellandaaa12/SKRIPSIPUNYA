@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend - EduLearn LMS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .test-section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status.pending {
+            background: #faf089;
+            color: #744210;
+        }
+
+        .status.success {
+            background: #9ae6b4;
+            color: #22543d;
+        }
+
+        .status.error {
+            background: #fc8181;
+            color: #742a2a;
+        }
+
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .test-button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .test-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .result.success {
+            border: 2px solid #9ae6b4;
+        }
+
+        .result.error {
+            border: 2px solid #fc8181;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #2c5282;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #2d3748;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #667eea;
+        }
+
+        .url-display {
+            background: #2d3748;
+            color: #68d391;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .summary h3 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .summary p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Backend Deployment</h1>
+        <p class="subtitle">EduLearn LMS - Backend Connection Tester</p>
+
+        <div class="info-box">
+            <h3>📝 Instruksi</h3>
+            <p>
+                Sebelum test, pastikan Anda sudah <strong>deploy backend</strong> terlebih dahulu.<br>
+                Gunakan command: <code>supabase functions deploy make-server</code><br>
+                atau klik tombol "Deploy" di Figma Make interface.
+            </p>
+        </div>
+
+        <div class="url-display">
+            🔗 Backend URL: https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server
+        </div>
+
+        <!-- Test 1: Health Check -->
+        <div class="test-section">
+            <h2>
+                <span id="status1" class="status pending">⏳ Pending</span>
+                Test 1: Health Check
+            </h2>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 15px;">
+                Mengecek apakah backend sedang running
+            </p>
+            <button class="test-button" onclick="testHealth()">
+                🏥 Run Health Check
+            </button>
+            <div id="result1"></div>
+        </div>
+
+        <!-- Test 2: API Root -->
+        <div class="test-section">
+            <h2>
+                <span id="status2" class="status pending">⏳ Pending</span>
+                Test 2: API Root Info
+            </h2>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 15px;">
+                Mengecek informasi API dan available endpoints
+            </p>
+            <button class="test-button" onclick="testRoot()">
+                📋 Get API Info
+            </button>
+            <div id="result2"></div>
+        </div>
+
+        <!-- Test 3: Bootstrap Admin -->
+        <div class="test-section">
+            <h2>
+                <span id="status3" class="status pending">⏳ Pending</span>
+                Test 3: Bootstrap Admin (Optional)
+            </h2>
+            <p style="color: #718096; font-size: 14px; margin-bottom: 15px;">
+                Create admin account pertama kali (hanya bisa dilakukan sekali)
+            </p>
+            <button class="test-button" onclick="testBootstrap()">
+                👑 Create Admin Account
+            </button>
+            <div id="result3"></div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary" id="summary" style="display: none;">
+            <h3 id="summaryTitle">✅ All Tests Passed!</h3>
+            <p id="summaryText">Backend is deployed and running correctly.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server';
+        let testResults = { test1: null, test2: null, test3: null };
+
+        async function testHealth() {
+            const button = event.target;
+            const resultDiv = document.getElementById('result1');
+            const statusDiv = document.getElementById('status1');
+
+            button.disabled = true;
+            button.innerHTML = '<span class="loading"></span> Testing...';
+            statusDiv.className = 'status pending';
+            statusDiv.innerHTML = '⏳ Running';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '✅ Success';
+                    testResults.test1 = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}\n\n⚠️ Backend belum di-deploy atau tidak dapat diakses.\n\nSolusi:\n1. Deploy backend dengan command: supabase functions deploy make-server\n2. Atau klik tombol "Deploy" di Figma Make interface\n3. Tunggu beberapa detik setelah deploy, lalu test lagi`;
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Failed';
+                testResults.test1 = false;
+            }
+
+            button.disabled = false;
+            button.innerHTML = '🏥 Run Health Check';
+            updateSummary();
+        }
+
+        async function testRoot() {
+            const button = event.target;
+            const resultDiv = document.getElementById('result2');
+            const statusDiv = document.getElementById('status2');
+
+            button.disabled = true;
+            button.innerHTML = '<span class="loading"></span> Testing...';
+            statusDiv.className = 'status pending';
+            statusDiv.innerHTML = '⏳ Running';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '✅ Success';
+                    testResults.test2 = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}\n\n⚠️ Backend belum di-deploy atau tidak dapat diakses.`;
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Failed';
+                testResults.test2 = false;
+            }
+
+            button.disabled = false;
+            button.innerHTML = '📋 Get API Info';
+            updateSummary();
+        }
+
+        async function testBootstrap() {
+            const button = event.target;
+            const resultDiv = document.getElementById('result3');
+            const statusDiv = document.getElementById('status3');
+
+            button.disabled = true;
+            button.innerHTML = '<span class="loading"></span> Creating Admin...';
+            statusDiv.className = 'status pending';
+            statusDiv.innerHTML = '⏳ Running';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/bootstrap/admin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Admin EduLearn',
+                        email: 'admin@test.com',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Admin account created successfully!\n\n` +
+                        `Email: admin@test.com\n` +
+                        `Password: password123\n\n` +
+                        `Full Response:\n` +
+                        JSON.stringify(data, null, 2);
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '✅ Success';
+                    testResults.test3 = true;
+                } else if (response.status === 403) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `⚠️ Admin already exists!\n\n` +
+                        `This is normal if you've already created an admin account.\n\n` +
+                        `Use existing credentials:\n` +
+                        `Email: admin@test.com\n` +
+                        `Password: password123\n\n` +
+                        `Response:\n` +
+                        JSON.stringify(data, null, 2);
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '⚠️ Already Exists';
+                    testResults.test3 = false;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}\n\n⚠️ Pastikan:\n1. Backend sudah di-deploy\n2. Table 'profiles' sudah dibuat di database`;
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Failed';
+                testResults.test3 = false;
+            }
+
+            button.disabled = false;
+            button.innerHTML = '👑 Create Admin Account';
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const summaryTitle = document.getElementById('summaryTitle');
+            const summaryText = document.getElementById('summaryText');
+
+            // Check if at least test 1 and test 2 passed
+            if (testResults.test1 === true && testResults.test2 === true) {
+                summary.style.display = 'block';
+                summaryTitle.innerHTML = '✅ Backend is Running!';
+                summaryText.innerHTML = 'Backend deployed successfully. You can now use the application.';
+            } else if (testResults.test1 === false || testResults.test2 === false) {
+                summary.style.display = 'block';
+                summary.style.background = 'linear-gradient(135deg, #fc8181 0%, #f56565 100%)';
+                summaryTitle.innerHTML = '❌ Backend Not Deployed';
+                summaryText.innerHTML = 'Please deploy the backend first using: supabase functions deploy make-server';
+            }
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector('.test-button').click();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

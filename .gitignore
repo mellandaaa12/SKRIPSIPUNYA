@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+node_modules 2/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite
+*.timestamp-*.mjs
+vite.config.ts.timestamp-*.mjs
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V5
+.Trashes
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test files (not needed in production)
+test-*.js
+test-*.ts
+test-*.mjs
+test_*.js
+scratch.ts
+apply-rls-fix.js
+bootstrap-admin-script.js
+check-passwords.js
+check-pembelajaran.js
+proxy.js
+
+# Supabase
+supabase/.branches/
+supabase/.temp/

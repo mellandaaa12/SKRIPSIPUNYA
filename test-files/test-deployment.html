@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Deployment - EduLearn LMS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .url-display {
+            background: #1e293b;
+            color: #60a5fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .log {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            line-height: 1.5;
+        }
+        
+        .log-entry.success { color: #4ade80; }
+        .log-entry.error { color: #f87171; }
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.warning { color: #fbbf24; }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .credentials {
+            background: #e0f2fe;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        .credentials strong {
+            color: #0c4a6e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Deployment</h1>
+        <p class="subtitle">Verify backend deployment and functionality</p>
+        
+        <div class="section">
+            <h2>📡 Backend URL</h2>
+            <div class="url-display">
+                https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>1️⃣ Health Check</h2>
+            <button onclick="testHealth()">🏥 Test Health</button>
+            <span id="health-status"></span>
+            <div class="url-display" style="font-size: 11px;">
+                GET /make-server-5b267751/health
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>2️⃣ API Info</h2>
+            <button onclick="testApiInfo()">ℹ️ Get API Info</button>
+            <span id="info-status"></span>
+            <div class="url-display" style="font-size: 11px;">
+                GET /make-server-5b267751
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>3️⃣ Bootstrap Admin</h2>
+            <button onclick="bootstrapAdmin()">👤 Create Admin Account</button>
+            <span id="bootstrap-status"></span>
+            <div class="credentials">
+                <strong>Credentials:</strong><br>
+                📧 Email: admin@sekolah.com<br>
+                🔑 Password: admin123456
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>4️⃣ Test Login Flow</h2>
+            <button onclick="testLogin()">🔐 Test Login</button>
+            <button onclick="clearSession()">🗑️ Clear Session</button>
+            <span id="login-status"></span>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Test Results</h2>
+            <button onclick="clearLogs()">🧹 Clear Logs</button>
+            <button onclick="runAllTests()">🚀 Run All Tests</button>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        const PROJECT_ID = 'tjfmwixttmrayvhqhena';
+        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqZm13aXh0dG1yYXl2aHFoZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NDkxNDIsImV4cCI6MjA4ODEyNTE0Mn0.GcwxTKQAxvKgMRo9FIYS-Im8eW-qxN8UNIOTr4Oi_Ek';
+        const API_BASE = `https://${PROJECT_ID}.supabase.co/functions/v1/make-server/make-server-5b267751`;
+        
+        window.supabase = createClient(
+            `https://${PROJECT_ID}.supabase.co`,
+            ANON_KEY
+        );
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function setStatus(elementId, text, success) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<span class="status ${success ? 'success' : 'error'}">${text}</span>`;
+        }
+        
+        window.clearLogs = () => {
+            document.getElementById('log').innerHTML = '';
+            log('📝 Logs cleared', 'info');
+        };
+        
+        window.testHealth = async () => {
+            log('🏥 Testing health endpoint...', 'info');
+            log(`URL: ${API_BASE}/health`, 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    log('✅ Health check PASSED!', 'success');
+                    log(`Message: ${data.message}`, 'info');
+                    log(`Timestamp: ${data.timestamp}`, 'info');
+                    setStatus('health-status', '✅ Passed', true);
+                } else {
+                    log('❌ Health check FAILED: Unexpected status', 'error');
+                    setStatus('health-status', '❌ Failed', false);
+                }
+            } catch (error) {
+                log(`❌ Health check ERROR: ${error.message}`, 'error');
+                log('💡 Make sure function is deployed!', 'warning');
+                setStatus('health-status', '❌ Error', false);
+            }
+        };
+        
+        window.testApiInfo = async () => {
+            log('ℹ️ Getting API info...', 'info');
+            
+            try {
+                const response = await fetch(API_BASE);
+                const data = await response.json();
+                
+                log('✅ API Info retrieved!', 'success');
+                log(`Message: ${data.message}`, 'info');
+                log(`Version: ${data.version}`, 'info');
+                log('📋 Available endpoints:', 'info');
+                log(JSON.stringify(data.endpoints, null, 2), 'info');
+                setStatus('info-status', '✅ Success', true);
+            } catch (error) {
+                log(`❌ API Info ERROR: ${error.message}`, 'error');
+                setStatus('info-status', '❌ Error', false);
+            }
+        };
+        
+        window.bootstrapAdmin = async () => {
+            log('👤 Starting bootstrap process...', 'info');
+            log(`URL: ${API_BASE}/bootstrap/admin`, 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/bootstrap/admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Administrator',
+                        email: 'admin@sekolah.com',
+                        password: 'admin123456'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    log('✅ Admin account created successfully!', 'success');
+                    log(`User ID: ${data.admin.id}`, 'info');
+                    log(`Email: ${data.admin.email}`, 'info');
+                    log(`Name: ${data.admin.name}`, 'info');
+                    log(`Role: ${data.admin.role}`, 'info');
+                    log('🔑 Use these credentials to login', 'success');
+                    setStatus('bootstrap-status', '✅ Created', true);
+                } else if (response.status === 403) {
+                    log('⚠️ Admin already exists (this is OK)', 'warning');
+                    log(data.error, 'warning');
+                    setStatus('bootstrap-status', '✅ Already Exists', true);
+                } else {
+                    log(`❌ Bootstrap FAILED: ${data.error}`, 'error');
+                    setStatus('bootstrap-status', '❌ Failed', false);
+                }
+            } catch (error) {
+                log(`❌ Bootstrap ERROR: ${error.message}`, 'error');
+                setStatus('bootstrap-status', '❌ Error', false);
+            }
+        };
+        
+        window.testLogin = async () => {
+            log('🔐 Starting login test...', 'info');
+            
+            try {
+                // Clear existing session
+                await window.supabase.auth.signOut();
+                log('🔄 Cleared existing session', 'info');
+                
+                // Sign in with Supabase Auth
+                log('🔑 Signing in with Supabase Auth...', 'info');
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: 'admin@sekolah.com',
+                    password: 'admin123456'
+                });
+                
+                if (error) {
+                    log(`❌ Supabase auth FAILED: ${error.message}`, 'error');
+                    setStatus('login-status', '❌ Auth Failed', false);
+                    return;
+                }
+                
+                log('✅ Supabase auth successful!', 'success');
+                log(`User ID: ${data.user.id}`, 'info');
+                log(`Token: ${data.session.access_token.substring(0, 30)}...`, 'info');
+                
+                // Test /auth/me endpoint
+                log('📥 Testing /auth/me endpoint...', 'info');
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${data.session.access_token}`
+                    }
+                });
+                
+                log(`Response status: ${response.status}`, 'info');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ /auth/me FAILED: ${response.status} ${errorText}`, 'error');
+                    setStatus('login-status', '❌ JWT Invalid', false);
+                    return;
+                }
+                
+                const userData = await response.json();
+                log('✅ User data loaded successfully!', 'success');
+                log(`User ID: ${userData.user.id}`, 'info');
+                log(`Email: ${userData.user.email}`, 'info');
+                log(`Name: ${userData.user.name}`, 'info');
+                log(`Role: ${userData.user.role}`, 'info');
+                log(`Status: ${userData.user.status}`, 'info');
+                log('🎉 LOGIN TEST PASSED!', 'success');
+                log('💡 Now you can login via /login page', 'success');
+                setStatus('login-status', '✅ Success', true);
+                
+            } catch (error) {
+                log(`❌ Login test ERROR: ${error.message}`, 'error');
+                setStatus('login-status', '❌ Error', false);
+            }
+        };
+        
+        window.clearSession = async () => {
+            await window.supabase.auth.signOut();
+            localStorage.clear();
+            log('✅ Session cleared', 'success');
+        };
+        
+        window.runAllTests = async () => {
+            clearLogs();
+            log('🚀 Running all tests...', 'info');
+            log('═'.repeat(50), 'info');
+            
+            await testHealth();
+            log('═'.repeat(50), 'info');
+            
+            await new Promise(r => setTimeout(r, 500));
+            await testApiInfo();
+            log('═'.repeat(50), 'info');
+            
+            await new Promise(r => setTimeout(r, 500));
+            await bootstrapAdmin();
+            log('═'.repeat(50), 'info');
+            
+            await new Promise(r => setTimeout(r, 500));
+            await testLogin();
+            log('═'.repeat(50), 'info');
+            
+            log('🎉 All tests completed!', 'success');
+        };
+        
+        // Auto-run health check on load
+        window.addEventListener('load', () => {
+            log('🚀 Test page loaded', 'info');
+            log(`Backend URL: ${API_BASE}`, 'info');
+            log('═'.repeat(50), 'info');
+            setTimeout(testHealth, 500);
+        });
+    </script>
+</body>
+</html>

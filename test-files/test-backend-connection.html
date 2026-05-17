@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Backend Connection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .endpoint {
+            color: #0066cc;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Backend Connection Test</h1>
+        <p>Test koneksi ke Supabase Edge Function <code>make-server</code></p>
+
+        <div class="test-section">
+            <h3>1️⃣ Health Check</h3>
+            <p>Test endpoint: <span class="endpoint">/health</span></p>
+            <button onclick="testHealth()">Test Health</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Create First Admin (Bootstrap)</h3>
+            <p>Test endpoint: <span class="endpoint">/bootstrap/admin</span></p>
+            <div style="margin: 10px 0;">
+                <input type="text" id="admin-name" placeholder="Admin Name" value="Admin" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="email" id="admin-email" placeholder="admin@edulearn.com" value="admin@edulearn.com" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="password" id="admin-password" placeholder="Password" value="admin123" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <button onclick="testBootstrap()">Create Admin</button>
+            <div id="bootstrap-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Login Test</h3>
+            <p>Test endpoint: <span class="endpoint">/auth/signin</span></p>
+            <div style="margin: 10px 0;">
+                <input type="email" id="login-email" placeholder="admin@edulearn.com" value="admin@edulearn.com" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                <input type="password" id="login-password" placeholder="Password" value="admin123" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <button onclick="testLogin()">Login</button>
+            <div id="login-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Get Current User</h3>
+            <p>Test endpoint: <span class="endpoint">/auth/me</span></p>
+            <p class="warning" style="padding: 10px; border-radius: 4px; font-size: 12px;">
+                ⚠️ You must login first (step 3) before testing this
+            </p>
+            <button onclick="testGetUser()">Get Current User</button>
+            <div id="user-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Configuration</h3>
+            <div class="info result">
+Project ID: tjfmwixttmrayvhqhena
+Function Name: make-server
+Base URL: https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server
+
+Expected Endpoints:
+✓ GET  /health
+✓ POST /bootstrap/admin
+✓ POST /auth/signin
+✓ GET  /auth/me
+✓ POST /auth/signout
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://tjfmwixttmrayvhqhena.supabase.co/functions/v1/make-server';
+        let accessToken = null;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function testHealth() {
+            try {
+                showResult('health-result', '⏳ Testing health endpoint...', 'info');
+                
+                const response = await fetch(`${BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('health-result', 
+                        `✅ SUCCESS!\n\nStatus: ${response.status}\nResponse:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('health-result', 
+                        `❌ FAILED\n\nStatus: ${response.status}\nResponse:\n${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('health-result', 
+                    `❌ ERROR\n\n${error.message}\n\nMake sure the Edge Function is deployed:\nsupabase functions deploy make-server`, 
+                    'error'
+                );
+            }
+        }
+
+        async function testBootstrap() {
+            try {
+                const name = document.getElementById('admin-name').value;
+                const email = document.getElementById('admin-email').value;
+                const password = document.getElementById('admin-password').value;
+
+                showResult('bootstrap-result', '⏳ Creating admin user...', 'info');
+                
+                const response = await fetch(`${BASE_URL}/bootstrap/admin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('bootstrap-result', 
+                        `✅ ADMIN CREATED!\n\nEmail: ${email}\nPassword: ${password}\n\nResponse:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('bootstrap-result', 
+                        `❌ FAILED\n\nStatus: ${response.status}\n\n${data.error || JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('bootstrap-result', `❌ ERROR\n\n${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                showResult('login-result', '⏳ Logging in...', 'info');
+                
+                const response = await fetch(`${BASE_URL}/auth/signin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.session?.access_token;
+                    showResult('login-result', 
+                        `✅ LOGIN SUCCESS!\n\nAccess Token: ${accessToken ? accessToken.substring(0, 40) + '...' : 'N/A'}\n\nUser:\n${JSON.stringify(data.user, null, 2)}\n\n✓ Token saved! You can now test "Get Current User"`, 
+                        'success'
+                    );
+                } else {
+                    showResult('login-result', 
+                        `❌ LOGIN FAILED\n\nStatus: ${response.status}\n\n${data.error || JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('login-result', `❌ ERROR\n\n${error.message}`, 'error');
+            }
+        }
+
+        async function testGetUser() {
+            try {
+                if (!accessToken) {
+                    showResult('user-result', 
+                        `⚠️ NO TOKEN\n\nPlease login first (step 3) to get an access token`, 
+                        'warning'
+                    );
+                    return;
+                }
+
+                showResult('user-result', '⏳ Getting current user...', 'info');
+                
+                const response = await fetch(`${BASE_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('user-result', 
+                        `✅ USER DATA RETRIEVED!\n\nResponse:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('user-result', 
+                        `❌ FAILED\n\nStatus: ${response.status}\n\n${JSON.stringify(data, null, 2)}\n\nThis might mean:\n1. Token is invalid/expired\n2. Backend validation is not working\n3. User not in profiles table`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('user-result', `❌ ERROR\n\n${error.message}`, 'error');
+            }
+        }
+
+        // Run health check on load
+        window.onload = () => {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

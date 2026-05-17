@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap Admin Account</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 13px;
+        }
+        
+        .alert strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+        
+        .credentials {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .credentials h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .credential-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .credential-row:last-child {
+            border-bottom: none;
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .credential-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Bootstrap Admin</h1>
+            <p>Buat akun administrator pertama untuk sistem</p>
+        </div>
+        
+        <div class="alert">
+            <strong>⚠️ PENTING:</strong>
+            Endpoint ini hanya bisa dijalankan sekali untuk membuat admin pertama. Setelah admin dibuat, endpoint ini akan dinonaktifkan secara otomatis untuk keamanan.
+        </div>
+        
+        <form id="bootstrapForm">
+            <div class="form-group">
+                <label for="name">Nama Lengkap</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value="Administrator"
+                    placeholder="Masukkan nama lengkap"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value="admin@sekolah.com"
+                    placeholder="Masukkan email"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    value="admin123456"
+                    placeholder="Masukkan password (min. 6 karakter)"
+                    required
+                    minlength="6"
+                >
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">
+                Buat Admin Account
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Membuat akun admin...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('bootstrapForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        
+        // Project ID from Supabase
+        const PROJECT_ID = 'tjfmwixttmrayvhqhena';
+        const API_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/make-server-5b267751/bootstrap/admin`;
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results
+            result.style.display = 'none';
+            result.className = 'result';
+            
+            // Show loading
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            
+            try {
+                // Call bootstrap API
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                
+                if (response.ok && data.success) {
+                    // Success
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3 style="margin-bottom: 10px;">✅ Admin Account Berhasil Dibuat!</h3>
+                        <p style="margin-bottom: 15px;">${data.message}</p>
+                        
+                        <div class="credentials">
+                            <h3>🔑 Kredensial Login:</h3>
+                            <div class="credential-row">
+                                <span class="credential-label">Email:</span>
+                                <span class="credential-value">${data.credentials.email}</span>
+                            </div>
+                            <div class="credential-row">
+                                <span class="credential-label">Password:</span>
+                                <span class="credential-value">${data.credentials.password}</span>
+                            </div>
+                            <div class="credential-row">
+                                <span class="credential-label">Role:</span>
+                                <span class="credential-value">${data.admin.role}</span>
+                            </div>
+                            <div class="credential-row">
+                                <span class="credential-label">User ID:</span>
+                                <span class="credential-value" style="font-size: 11px;">${data.admin.id}</span>
+                            </div>
+                        </div>
+                        
+                        <p style="margin-top: 15px; color: #856404; background: #fff3cd; padding: 10px; border-radius: 5px; font-size: 13px;">
+                            <strong>⚠️ ${data.warning}</strong>
+                        </p>
+                        
+                        <p style="margin-top: 15px; font-size: 13px;">
+                            <strong>Langkah Selanjutnya:</strong><br>
+                            1. Simpan kredensial ini dengan aman<br>
+                            2. <a href="/login" style="color: #667eea; text-decoration: none; font-weight: 600;">Login ke aplikasi →</a><br>
+                            3. Gunakan endpoint <code>/admin/create-user</code> untuk membuat user lainnya
+                        </p>
+                    `;
+                    
+                    // Disable form
+                    form.style.opacity = '0.5';
+                    form.style.pointerEvents = 'none';
+                } else {
+                    // Error
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <h3 style="margin-bottom: 10px;">❌ Error</h3>
+                        <p><strong>Message:</strong> ${data.error || data.message || 'Unknown error'}</p>
+                        ${data.details ? `<p style="margin-top: 10px; font-size: 12px;"><strong>Details:</strong> ${data.details}</p>` : ''}
+                        
+                        ${response.status === 403 ? `
+                            <p style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 13px;">
+                                <strong>💡 Info:</strong> Admin sudah ada di sistem. Endpoint bootstrap sudah dinonaktifkan. Silakan login dengan akun admin yang sudah ada atau gunakan Supabase Dashboard untuk membuat admin baru.
+                            </p>
+                        ` : ''}
+                    `;
+                }
+            } catch (error) {
+                // Network error
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+                
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3 style="margin-bottom: 10px;">❌ Network Error</h3>
+                    <p>${error.message}</p>
+                    <p style="margin-top: 10px; font-size: 13px;">
+                        <strong>Troubleshooting:</strong><br>
+                        1. Pastikan PROJECT_ID sudah diisi dengan benar di script<br>
+                        2. Pastikan backend server sudah running<br>
+                        3. Check browser console untuk error details
+                    </p>
+                `;
+                
+                console.error('Bootstrap error:', error);
+            }
+        });
+        
+        // Check if PROJECT_ID is set
+        if (PROJECT_ID === 'YOUR_SUPABASE_PROJECT_ID') {
+            result.className = 'result error';
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h3 style="margin-bottom: 10px;">⚠️ Configuration Required</h3>
+                <p>Silakan edit file HTML ini dan ganti <code>YOUR_SUPABASE_PROJECT_ID</code> dengan Supabase Project ID Anda.</p>
+                <p style="margin-top: 10px; font-size: 13px;">
+                    <strong>Cara mendapatkan Project ID:</strong><br>
+                    1. Buka Supabase Dashboard<br>
+                    2. Pilih project Anda<br>
+                    3. Go to Settings → API<br>
+                    4. Copy "Project URL" (format: https://<strong>PROJECT_ID</strong>.supabase.co)
+                </p>
+            `;
+            submitBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
