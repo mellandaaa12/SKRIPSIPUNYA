@@ -29,18 +29,9 @@ BEGIN
 
   -- 4. Insert into auth.users directly
   INSERT INTO auth.users (
-    id,
-    instance_id,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    raw_app_meta_data,
-    raw_user_meta_data,
-    created_at,
-    updated_at,
-    role,
-    aud,
-    confirmed_at
+    id, instance_id, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud, confirmed_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change
   ) VALUES (
     new_user_id,
     '00000000-0000-0000-0000-000000000000'::uuid,
@@ -49,11 +40,8 @@ BEGIN
     now(),
     jsonb_build_object('provider', 'email', 'providers', array['email']),
     jsonb_build_object('name', user_name, 'role', user_role, 'classId', user_class_id),
-    now(),
-    now(),
-    'authenticated',
-    'authenticated',
-    now()
+    now(), now(), 'authenticated', 'authenticated', now(),
+    '', '', '', ''
   );
 
   -- 5. Insert into auth.identities
@@ -83,6 +71,7 @@ BEGIN
     role,
     class_id,
     status,
+    demo_password,
     updated_at
   ) VALUES (
     new_user_id,
@@ -95,6 +84,7 @@ BEGIN
       WHEN user_role = 'guru' THEN 'Guru'
       ELSE 'Siswa'
     END,
+    user_password,
     now()
   )
   ON CONFLICT (id) DO UPDATE SET
@@ -103,6 +93,7 @@ BEGIN
     role = EXCLUDED.role,
     class_id = EXCLUDED.class_id,
     status = EXCLUDED.status,
+    demo_password = EXCLUDED.demo_password,
     updated_at = now();
 
   RETURN jsonb_build_object('success', true, 'user_id', new_user_id);

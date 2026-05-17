@@ -42,9 +42,27 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
     { emoji: "😕", label: "Kurang Paham" },
   ];
 
+  const needsKendala = isStandar || isSingkat;
+  const needsKesan = isStandar;
+  const canSubmit =
+    !!pemahaman &&
+    (!needsKendala || kendala.trim().length > 0) &&
+    (!needsKesan || kesan.trim().length > 0) &&
+    (!isUeqActive || hasClickedUEQ);
+
   const handleSubmit = async () => {
     if (!pemahaman) {
       toast.error("Silakan pilih tingkat pemahaman kamu!");
+      return;
+    }
+
+    if (needsKendala && !kendala.trim()) {
+      toast.error("Silakan isi jawaban kendala kamu!");
+      return;
+    }
+
+    if (needsKesan && !kesan.trim()) {
+      toast.error("Silakan isi kesan dan pendapat kamu!");
       return;
     }
 
@@ -58,8 +76,8 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
       await submitRefleksi({
         materi_id: materiId,
         pemahaman,
-        kendala: kendala || undefined,
-        kesan: kesan || undefined,
+        kendala: needsKendala ? kendala.trim() : undefined,
+        kesan: needsKesan ? kesan.trim() : undefined,
       });
 
       toast.success("Refleksi berhasil dikirim!");
@@ -145,7 +163,7 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
               {(isStandar || isSingkat) && (
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-[#0077B6] mb-2">
-                    {pertanyaanKendala || "Apa kendala yang kamu alami?"} (Opsional)
+                    {pertanyaanKendala || "Apa kendala yang kamu alami?"}
                   </label>
                   <textarea
                     value={kendala}
@@ -160,7 +178,7 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
               {isStandar && (
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-[#0077B6] mb-2">
-                    {pertanyaanKesan || "Bagaimana pendapatmu tentang pembelajaran hari ini?"} (Opsional)
+                    {pertanyaanKesan || "Bagaimana pendapatmu tentang pembelajaran hari ini?"}
                   </label>
                   <textarea
                     value={kesan}
@@ -222,7 +240,7 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
 
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !pemahaman || (isUeqActive && !hasClickedUEQ)}
+                disabled={isSubmitting || !canSubmit}
                 className="w-full py-4 bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex justify-center items-center gap-2"
               >
                 {isSubmitting ? (

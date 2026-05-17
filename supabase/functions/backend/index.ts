@@ -31,6 +31,200 @@ async function db(endpoint: string, options: RequestInit = {}) {
   return res.json();
 }
 
+/** Normalize username for derived email (matches KelolaSiswa/KelolaGuru) */
+function normalizeUsername(input: string): string {
+  return input.trim().toLowerCase().replace(/\s+/g, "");
+}
+
+/** Cek password dari kolom profiles.password atau demo_password */
+function profilePasswordMatches(profile: any, password: string): boolean {
+  const p = String(password);
+  if (profile.password != null && String(profile.password) === p) return true;
+  if (profile.demo_password != null && String(profile.demo_password) === p) return true;
+  return false;
+}
+
+/** Resolve profile — prioritas kolom username di tabel profiles */
+async function resolveProfileByLogin(usernameOrEmail: string): Promise<any | null> {
+  const raw = usernameOrEmail.trim();
+  if (!raw) return null;
+
+  const normalized = normalizeUsername(raw);
+
+  // 1. Kolom username (exact, case-insensitive)
+  try {
+    const byUsername = await db(`profiles?username=ilike.${encodeURIComponent(raw)}&select=*&limit=1`);
+    if (byUsername.length > 0) return byUsername[0];
+  } catch {
+    // kolom username mungkin belum ada di beberapa environment
+  }
+
+  // 2. Exact email
+  if (raw.includes("@")) {
+    const byEmail = await db(`profiles?email=eq.${encodeURIComponent(raw)}&select=*&limit=1`);
+    if (byEmail.length > 0) return byEmail[0];
+    return null;
+  }
+
+  // 3. Derived email: username@studywithme.id
+  const derivedEmail = `${normalized}@studywithme.id`;
+  const byDerived = await db(`profiles?email=eq.${encodeURIComponent(derivedEmail)}&select=*&limit=1`);
+  if (byDerived.length > 0) return byDerived[0];
+
+  // 4. Email prefix (username@any-domain)
+  const byPrefix = await db(`profiles?email=ilike.${encodeURIComponent(normalized)}%40%&select=*&limit=1`);
+  if (byPrefix.length > 0) return byPrefix[0];
+
+  // 5. Display name (case-insensitive)
+  const byName = await db(`profiles?name=ilike.${encodeURIComponent(raw)}&select=*&limit=1`);
+  if (byName.length > 0) return byName[0];
+
+  return null;
+}
+
+/** Sign in via Supabase Auth password grant */
+async function signInWithPassword(email: string, password: string): Promise<{ ok: boolean; data?: any; error?: string }> {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    return { ok: false, error: data?.error_description || data?.msg || data?.error || "Login gagal" };
+  }
+  return { ok: true, data };
+}
+
+const adminHeaders = () => ({
+  "Content-Type": "application/json",
+  apikey: SUPABASE_SERVICE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+});
+
+/** Cari auth user by email via Admin API */
+async function findAuthUserByEmail(email: string): Promise<any | null> {
+  const res = await fetch(
+    `${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+    { headers: adminHeaders() }
+  );
+  if (!res.ok) return null;
+  const list = await res.json();
+  return list?.users?.[0] ?? null;
+}
+
+/** Hapus auth user rusak (penyebab "Database error querying schema") */
+async function deleteAuthUser(userId: string): Promise<void> {
+  await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: adminHeaders(),
+  });
+}
+
+/** Buat/perbarui auth user via Admin API (aman, tidak insert manual ke auth.users) */
+async function ensureAuthUser(profile: any, password: string): Promise<void> {
+  const headers = adminHeaders();
+  const meta = { name: profile.name, role: profile.role };
+  const body = {
+    email: profile.email,
+    password,
+    email_confirm: true,
+    user_metadata: meta,
+  };
+
+  const byIdRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${profile.id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (byIdRes.ok) return;
+
+  const existing = await findAuthUserByEmail(profile.email);
+  if (existing?.id) {
+    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${existing.id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ password, email_confirm: true, user_metadata: meta }),
+    });
+    return;
+  }
+
+  await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ ...body, user_metadata: meta }),
+  });
+}
+
+/** Login + perbaiki akun auth rusak jika perlu */
+async function signInAndRepair(profile: any, password: string): Promise<{ ok: boolean; data?: any; error?: string }> {
+  let auth = await signInWithPassword(profile.email, password);
+  if (auth.ok) return auth;
+
+  const err = (auth.error || "").toLowerCase();
+  const needsRepair = err.includes("querying schema") || err.includes("invalid") || err.includes("credentials");
+
+  if (!needsRepair) return auth;
+
+  console.log("🔧 Repairing auth user for:", profile.email);
+  const existing = await findAuthUserByEmail(profile.email);
+  if (existing?.id) await deleteAuthUser(existing.id);
+  if (profile.id && profile.id !== existing?.id) {
+    try { await deleteAuthUser(profile.id); } catch { /* ignore */ }
+  }
+
+  await ensureAuthUser(profile, password);
+  return signInWithPassword(profile.email, password);
+}
+
+/** Login with username + password from profiles table */
+async function handleAuthLogin(body: { username?: string; email?: string; password?: string }) {
+  const usernameOrEmail = (body.username || body.email || "").trim();
+  const password = body.password || "";
+
+  if (!usernameOrEmail || !password) {
+    return json({ error: "Username dan password wajib diisi" }, 400);
+  }
+
+  console.log("🔐 Login attempt:", usernameOrEmail);
+
+  const profile = await resolveProfileByLogin(usernameOrEmail);
+  if (!profile) {
+    return json({ error: "User tidak ditemukan. Hubungi admin." }, 401);
+  }
+
+  // Validasi password dari kolom profiles.password (atau demo_password)
+  if (!profilePasswordMatches(profile, password)) {
+    return json({ error: "Username atau password salah" }, 401);
+  }
+
+  if (!profile.email) {
+    return json({ error: "Email profil kosong. Hubungi admin." }, 401);
+  }
+
+  console.log("🔄 Auth sync for:", profile.username || profile.name || profile.email);
+  await ensureAuthUser(profile, password);
+
+  const auth = await signInAndRepair(profile, password);
+  if (!auth.ok) {
+    return json({ error: auth.error || "Login gagal. Hubungi admin." }, 401);
+  }
+
+  console.log("✅ Login berhasil:", profile.name, profile.role);
+
+  return json({
+    access_token: auth.data.access_token,
+    refresh_token: auth.data.refresh_token,
+    expires_in: auth.data.expires_in,
+    token_type: auth.data.token_type || "bearer",
+    user: auth.data.user,
+    profile,
+  });
+}
+
 async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -60,28 +254,18 @@ async function handler(req: Request): Promise<Response> {
           method: "POST",
           body: JSON.stringify({ id: crypto.randomUUID(), name, email, role: "admin", avatar_color: "#1294f2", status: "Active", demo_password: password }),
         });
+        await ensureAuthUser(newAdmin[0], password);
         return json({ success: true, credentials: { email, password }, user: newAdmin[0] });
       } catch (e: any) {
         return json({ error: e.message }, 500);
       }
     }
 
-    // ── Login ────────────────────────────────────────────────────────────────
-    if (path === "/login/demo" && method === "POST") {
-      const { email, password } = await req.json();
-      console.log("🔐 Login:", email);
+    // ── Login (username + password dari database) ───────────────────────────
+    if ((path === "/auth/login" || path === "/login/demo" || path === "/login") && method === "POST") {
       try {
-        const profiles = await db(`profiles?email=eq.${encodeURIComponent(email)}`);
-        if (profiles.length === 0) return json({ error: "User tidak ditemukan. Hubungi admin." }, 401);
-        const profile = profiles[0];
-        if (!profile.demo_password || profile.demo_password !== password) return json({ error: "Password salah" }, 401);
-        console.log("✅ Login berhasil:", profile.name, profile.role);
-        return json({
-          access_token: `demo-token-${profile.id}`,
-          refresh_token: `demo-refresh-${crypto.randomUUID()}`,
-          expires_in: 3600,
-          user: { id: profile.id, email: profile.email, user_metadata: { name: profile.name, role: profile.role }, role: "authenticated" },
-        });
+        const body = await req.json();
+        return await handleAuthLogin(body);
       } catch (e: any) {
         return json({ error: e.message }, 500);
       }

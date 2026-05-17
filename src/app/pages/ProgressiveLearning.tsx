@@ -600,8 +600,23 @@ export default function ProgressiveLearning() {
         const updatedSteps = thisProgress?.steps || {};
         const allDone = pembelajaran.steps.every((s: any) => updatedSteps[s.id]?.completed === true);
         if (allDone) {
-          // Mark that we should show refleksi after closing quiz
-          setQuizJustFinishedAllSteps(true);
+          if (pembelajaran.enableReflection && !hasReflection) {
+            setQuizJustFinishedAllSteps(false);
+            setShowQuizModal(false);
+            setQuizStep(null);
+            setQuestions([]);
+            setCurrentQIdx(0);
+            setFeedback(null);
+            setCorrectCount(0);
+            setShowResult(false);
+            setScore(0);
+            setSelectedOptionIndices([]);
+            setFilledBlanks([]);
+            setShowHintConfirm(false);
+            setShowReflectionModal(true);
+          } else {
+            setQuizJustFinishedAllSteps(true);
+          }
         }
       }
     } catch (error) {
@@ -626,11 +641,8 @@ export default function ProgressiveLearning() {
       setFilledBlanks([]);
       setShowHintConfirm(false);
 
-      // Directly trigger refleksi modal if all steps done and reflection enabled
       if (shouldShowRefleksi && pembelajaran?.enableReflection && !hasReflection) {
-        setTimeout(() => {
-          setShowReflectionModal(true);
-        }, 800);
+        setShowReflectionModal(true);
       }
     }
   };
@@ -732,15 +744,13 @@ export default function ProgressiveLearning() {
           const updatedSteps = thisProgress?.steps || {};
           const allDone = pembelajaran.steps.every((s: any) => updatedSteps[s.id]?.completed === true);
           if (allDone && pembelajaran?.enableReflection && !hasReflection) {
-            setTimeout(() => {
-              setShowCodeEditorModal(false);
-              setCodeEditorStep(null);
-              setStudentCode("");
-              setCodeSubmitted(false);
-              setIsCodePreviewMode(false);
-              setTimeout(() => setShowReflectionModal(true), 800);
-            }, 1500);
-            return; // Skip default close
+            setShowCodeEditorModal(false);
+            setCodeEditorStep(null);
+            setStudentCode("");
+            setCodeSubmitted(false);
+            setIsCodePreviewMode(false);
+            setShowReflectionModal(true);
+            return;
           }
         }
         setTimeout(() => handleCloseCodeEditorModal(), 1500);
@@ -774,11 +784,7 @@ export default function ProgressiveLearning() {
       !showQuizModal &&
       !showHintConfirm
     ) {
-      // Small delay to allow any success animations to finish
-      const timer = setTimeout(() => {
-        setShowReflectionModal(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+      setShowReflectionModal(true);
     }
   }, [
     progressPercentage, 

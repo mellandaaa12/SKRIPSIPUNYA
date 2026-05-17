@@ -50,12 +50,12 @@ export default function LoginPage() {
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
-  // Listen to AuthContext user changes and redirect when ready
+  // If user is already logged in when visiting login page, redirect to dashboard
   useEffect(() => {
     if (user && !authLoading) {
       redirectAfterLogin(user.role);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,13 +63,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log("📧 Attempting login with email:", email);
+      console.log("🔐 Attempting login with username:", email);
       
-      // Sign in via raw lock-free AuthContext method
-      await signIn(email, password);
+      // Sign in via raw fetch — zero supabase client calls, never hangs
+      const result = await signIn(email, password);
       
-      console.log("✅ Login successful! State will trigger redirect...");
-      // Redirection is handled by the useEffect watching the 'user' state
+      console.log("✅ Login successful! Redirecting now...");
+      
+      // Redirect immediately using the role from the DB profile
+      const role = result?.customUser?.role || result?.user?.user_metadata?.role;
+      if (role) {
+        redirectAfterLogin(role);
+      }
       
     } catch (err: any) {
       console.error("❌ Login error:", err);
@@ -87,6 +92,7 @@ export default function LoginPage() {
       }
       
       setError(errorMessage);
+    } finally {
       setLoading(false);
     }
   };

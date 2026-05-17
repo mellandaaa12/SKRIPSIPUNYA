@@ -4,7 +4,8 @@ CREATE OR REPLACE FUNCTION public.create_confirmed_user(
   user_password TEXT,
   user_name TEXT,
   user_role TEXT,
-  user_class_id UUID DEFAULT NULL
+  user_class_id UUID DEFAULT NULL,
+  user_username TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -38,7 +39,11 @@ BEGIN
     updated_at,
     role,
     aud,
-    confirmed_at
+    confirmed_at,
+    confirmation_token,
+    recovery_token,
+    email_change_token_new,
+    email_change
   ) VALUES (
     new_user_id,
     '00000000-0000-0000-0000-000000000000'::uuid,
@@ -51,7 +56,11 @@ BEGIN
     now(),
     'authenticated',
     'authenticated',
-    now()
+    now(),
+    '',
+    '',
+    '',
+    ''
   );
 
   -- 5. Insert into auth.identities
@@ -81,6 +90,9 @@ BEGIN
     role,
     class_id,
     status,
+    username,
+    password,
+    demo_password,
     updated_at
   ) VALUES (
     new_user_id,
@@ -93,6 +105,9 @@ BEGIN
       WHEN user_role = 'guru' THEN 'Guru'
       ELSE 'Siswa'
     END,
+    coalesce(nullif(trim(user_username), ''), lower(split_part(user_email, '@', 1))),
+    user_password,
+    user_password,
     now()
   )
   ON CONFLICT (id) DO UPDATE SET
@@ -101,6 +116,9 @@ BEGIN
     role = EXCLUDED.role,
     class_id = EXCLUDED.class_id,
     status = EXCLUDED.status,
+    username = EXCLUDED.username,
+    password = EXCLUDED.password,
+    demo_password = EXCLUDED.demo_password,
     updated_at = now();
 
   RETURN jsonb_build_object('success', true, 'user_id', new_user_id);

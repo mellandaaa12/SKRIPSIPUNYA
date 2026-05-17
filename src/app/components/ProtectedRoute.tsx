@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,19 +7,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, session, refreshUser } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
-  const [checking, setChecking] = useState(false);
 
-  useEffect(() => {
-    // Only check session if we don't have user data
-    if (!user && !session && !checking) {
-      setChecking(true);
-      refreshUser().finally(() => setChecking(false));
-    }
-  }, [user, session, checking, refreshUser]);
-
-  if (checking) {
+  // While the initial session check is running, show a loading spinner
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="text-center">
@@ -31,10 +22,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
+  // Not logged in → redirect to login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Role check
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Redirect to appropriate dashboard based on role
     if (user.role === "admin") return <Navigate to="/dashboard-admin" replace />;
@@ -44,4 +37,3 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   return <>{children}</>;
 }
-

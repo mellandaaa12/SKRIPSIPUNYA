@@ -22,13 +22,11 @@ export function formatClassDisplayName(row: {
 // ==================== HELPER FUNCTIONS ====================
 
 /**
- * Get access token using getUser() — avoids the auth lock that getSession() acquires.
- * getUser() validates the JWT directly without acquiring any storage lock.
+ * Get access token from current session.
+ * Uses getSession() only — avoids calling both getUser() and getSession()
+ * which can cause lock contention on the Supabase auth storage.
  */
 async function getAccessToken(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  // Get the session token without triggering lock contention
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token || null;
 }
@@ -124,15 +122,21 @@ export const authAPI = {
     },
     accessToken: string
   ) {
+    const usernameFromEmail = data.email.includes("@")
+      ? data.email.split("@")[0].toLowerCase()
+      : data.email.toLowerCase().replace(/\s+/g, "");
+
     try {
       console.log("🚀 Attempting to create user via RPC 'create_confirmed_user':", data.email);
       // Try to call the security definer RPC first
+
       const { data: rpcData, error: rpcError } = await supabase.rpc("create_confirmed_user", {
         user_email: data.email,
         user_password: data.password,
         user_name: data.name,
         user_role: data.role,
         user_class_id: data.role === "siswa" ? data.classId || null : null,
+        user_username: usernameFromEmail,
       });
 
       if (!rpcError && rpcData) {
@@ -147,6 +151,14 @@ export const authAPI = {
             .single();
 
           if (!getProfileError && createdProfile) {
+            await supabase
+              .from("profiles")
+              .update({
+                username: usernameFromEmail,
+                password: data.password,
+                demo_password: data.password,
+              })
+              .eq("id", rpcData.user_id);
             return {
               success: true,
               user: createdProfile,
@@ -221,6 +233,9 @@ export const authAPI = {
       role: data.role,
       class_id: data.role === "siswa" ? data.classId || null : null,
       status: data.role === "admin" ? "Admin" : data.role === "guru" ? "Guru" : "Siswa",
+      username: usernameFromEmail,
+      password: data.password,
+      demo_password: data.password,
       updated_at: new Date().toISOString(),
     };
 
@@ -1935,12 +1950,24 @@ export const getMonitoringData = adminAPI.getMonitoringData;
 // Auth API
 export const demoAuthAPI = {
   /**
-   * Login with demo user (for admin-created users)
+   * Login with username + password (validated against profiles.demo_password via backend)
    */
-  async loginWithDemo(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
-    return data;
+  async loginWithDemo(username: string, password: string) {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+    const base =
+      import.meta.env.DEV && typeof window !== "undefined" && window.location.hostname === "localhost"
+        ? "/functions/v1/backend"
+        : `${supabaseUrl}/functions/v1/backend`;
+
+    const res = await fetch(`${base}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: anonKey },
+      body: JSON.stringify({ username, password }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || "Login gagal");
+    return json;
   },
 };
 
