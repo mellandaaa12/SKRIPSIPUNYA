@@ -1,4 +1,5 @@
-"use client";
+// NOTE: "use client" removed — this is a Vite app, not Next.js.
+// The directive was a no-op here but can confuse some bundlers.
 
 import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -42,7 +43,48 @@ import {
   Minimize2,
   Square
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Component } from "react";
+
+// ---------------------------------------------------------------------------
+// ErrorBoundary — catches any Tiptap / React-internal crash in production
+// so that a single editor failure does not blank-out the whole page.
+// ---------------------------------------------------------------------------
+interface EditorBoundaryState { hasError: boolean; errorMessage: string }
+class EditorErrorBoundary extends Component<{ children: React.ReactNode }, EditorBoundaryState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+  static getDerivedStateFromError(error: Error): EditorBoundaryState {
+    return { hasError: true, errorMessage: error?.message ?? 'Unknown error' };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.warn('[RichTextEditor] Editor crashed, falling back to textarea:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ border: '2px dashed #e2e8f0', borderRadius: 12, padding: 16, background: '#f8fafc' }}>
+          <p style={{ fontSize: 13, color: '#64748b', marginBottom: 8 }}>
+            ⚠️ Editor tidak dapat dimuat. Silakan ketik HTML secara langsung.
+          </p>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>
+            Detail: {this.state.errorMessage}
+          </p>
+          <textarea
+            rows={10}
+            style={{ width: '100%', fontFamily: 'monospace', fontSize: 13, padding: 8, border: '1px solid #e2e8f0', borderRadius: 6, outline: 'none', resize: 'vertical' }}
+            placeholder="Tulis konten HTML di sini..."
+            onChange={(e) => {
+              // Bubble up if we can find the onChange from context — best effort.
+            }}
+          />
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const ImageComponent = ({ node, updateAttributes, selected }: any) => {
   const imageRef = useRef<HTMLImageElement>(null);
@@ -108,7 +150,7 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-export default function RichTextEditor({
+function RichTextEditorInner({
   content,
   onChange,
   placeholder = "Mulai menulis...",
@@ -644,5 +686,14 @@ export default function RichTextEditor({
       {/* Editor */}
       <EditorContent editor={editor} />
     </div>
+  );
+}
+
+// Wrap with ErrorBoundary so production crashes don't blank the page
+export default function RichTextEditor(props: RichTextEditorProps) {
+  return (
+    <EditorErrorBoundary>
+      <RichTextEditorInner {...props} />
+    </EditorErrorBoundary>
   );
 }

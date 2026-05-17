@@ -8,7 +8,10 @@ export default defineConfig({
     rollupOptions: {
       input: './index.html',
       output: {
-        // Manual chunk splitting to improve caching and load performance
+        // Manual chunk splitting — intentionally excludes @tiptap/* and @codemirror/*
+        // so that Rollup can deduplicate their shared react/react-dom dependency correctly.
+        // Putting editor packages in their own chunk causes a second copy of react-dom
+        // to get bundled in, which triggers the __SECRET_INTERNALS runtime crash.
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router'],
           'vendor-supabase': ['@supabase/supabase-js'],
@@ -19,18 +22,12 @@ export default defineConfig({
             '@radix-ui/react-tabs',
             '@radix-ui/react-tooltip',
           ],
-          'vendor-editor': [
-            '@tiptap/react',
-            '@tiptap/starter-kit',
-            '@codemirror/view',
-            '@codemirror/state',
-          ],
           'vendor-motion': ['framer-motion'],
         },
       },
     },
-    // Warn if a chunk exceeds 600kb (default 500kb, raised slightly for editor bundles)
-    chunkSizeWarningLimit: 600,
+    // Warn if a chunk exceeds 700kb (editor chunks can be large)
+    chunkSizeWarningLimit: 700,
   },
   plugins: [
     react(),
@@ -40,6 +37,11 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Force a single instance of react and react-dom across all chunks.
+    // This is the critical fix: without this, @tiptap/react may bundle its own
+    // copy of react-dom, creating two React instances that conflict and throw
+    // "Cannot read properties of undefined (__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED)"
+    dedupe: ['react', 'react-dom'],
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
   server: {
@@ -56,4 +58,3 @@ export default defineConfig({
     }
   },
 })
-
