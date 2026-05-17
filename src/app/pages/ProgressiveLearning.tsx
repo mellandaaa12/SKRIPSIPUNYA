@@ -11,6 +11,7 @@ import { getPembelajaran, getProgress, userAPI, updateProgress, checkRefleksi } 
 import { supabase } from "../utils/supabase";
 import { RefleksiModal } from "../components/RefleksiModal";
 import { customPopup } from "../context/PopupContext";
+import { highlightCode } from "../utils/highlighter";
 
 export default function ProgressiveLearning() {
   const navigate = useNavigate();
@@ -274,8 +275,11 @@ export default function ProgressiveLearning() {
         questionText = q.pertanyaan;
         const choicesRaw = q.pilihan || [];
         choices = choicesRaw.map((p: any) => p.text || p);
-        const correctVal = q.jawabanBenar; // "A", "B", "C", "D"
-        const correctIdx = ["A", "B", "C", "D"].indexOf(correctVal);
+        const correctVal = q.jawabanBenar; // "A", "B", "C", "D", "E"
+        const correctIdx = (q.pilihan || []).findIndex((p: any, idx: number) => {
+          const label = p.label || String.fromCharCode(65 + idx);
+          return label === correctVal;
+        });
         correctAnswerText = choices[correctIdx] || "";
       } else {
         questionText = q.question || "";
@@ -678,61 +682,7 @@ export default function ProgressiveLearning() {
 
   // VS Code-style HTML syntax highlighting (token-based to avoid cascading regex issues)
   const highlightHTML = (code: string): string => {
-    if (!code) return "";
-    
-    const result: string[] = [];
-    let i = 0;
-    
-    while (i < code.length) {
-      // HTML comment
-      if (code.startsWith('<!--', i)) {
-        const end = code.indexOf('-->', i);
-        const comment = end >= 0 ? code.substring(i, end + 3) : code.substring(i);
-        result.push(`<span style="color:#6A9955;font-style:italic">${comment.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`);
-        i += comment.length;
-      }
-      // HTML tag
-      else if (code[i] === '<') {
-        const tagEnd = code.indexOf('>', i);
-        if (tagEnd >= 0) {
-          const tag = code.substring(i, tagEnd + 1);
-          // Parse: < or </ then tagName then attributes then >
-          const m = tag.match(/^(<\/?)(\w[\w-]*)([^>]*?)(\/?>)$/);
-          if (m) {
-            const bracket = m[1].replace(/</g,'&lt;');
-            const tagName = m[2];
-            let attrs = m[3];
-            const close = m[4].replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            
-            // Highlight attributes
-            attrs = attrs.replace(/([\w-]+)\s*=\s*"([^"]*)"/g, (_, attr, val) => 
-              ` <span style="color:#9CDCFE">${attr}</span><span style="color:#D4D4D4">=</span><span style="color:#CE9178">"${val}"</span>`
-            );
-            attrs = attrs.replace(/([\w-]+)\s*=\s*'([^']*)'/g, (_, attr, val) => 
-              ` <span style="color:#9CDCFE">${attr}</span><span style="color:#D4D4D4">=</span><span style="color:#CE9178">'${val}'</span>`
-            );
-            
-            result.push(`<span style="color:#808080">${bracket}</span><span style="color:#569CD6">${tagName}</span>${attrs}<span style="color:#808080">${close}</span>`);
-          } else {
-            result.push(tag.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-          }
-          i = tagEnd + 1;
-        } else {
-          result.push('&lt;');
-          i++;
-        }
-      }
-      // Regular text
-      else {
-        let textEnd = code.indexOf('<', i);
-        if (textEnd < 0) textEnd = code.length;
-        const text = code.substring(i, textEnd);
-        result.push(text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-        i = textEnd;
-      }
-    }
-    
-    return result.join('');
+    return highlightCode(code);
   };
 
   const completedSteps = pembelajaran?.steps?.filter((s: any) => isStepCompleted(s.id)).length || 0;

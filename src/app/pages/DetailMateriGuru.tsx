@@ -12,6 +12,7 @@ import { supabase } from "../utils/supabase";
 import { buildSegmentsForPembelajaran } from "../utils/learningProgress";
 import { LearningStepProgressBar } from "../components/LearningStepProgressBar";
 import { toast } from "sonner";
+import { highlightMateriContent } from "../utils/highlighter";
 
 export default function DetailMateriGuru() {
   const navigate = useNavigate();
@@ -935,7 +936,7 @@ export default function DetailMateriGuru() {
             <div className="flex-1 overflow-y-auto p-6">
               <div 
                 className="materi-content prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedStep.content?.bacaMateri || '<p>Konten materi tidak tersedia</p>' }}
+                dangerouslySetInnerHTML={{ __html: highlightMateriContent(selectedStep.content?.bacaMateri || '<p>Konten materi tidak tersedia</p>') }}
               />
             </div>
 
@@ -1008,7 +1009,7 @@ export default function DetailMateriGuru() {
                       {soal.pilihan?.map((pilihan: any, pIdx: number) => (
                         <div key={pIdx} className="flex items-center gap-3 p-3 bg-white border border-[#E2E8F0] rounded-[1.5rem]">
                           <div className="w-6 h-6 rounded-full border-2 border-[#CBD5E1] flex items-center justify-center">
-                            <span className="text-xs font-bold text-[#64748B]">{["A", "B", "C", "D"][pIdx]}</span>
+                            <span className="text-xs font-bold text-[#64748B]">{String.fromCharCode(65 + pIdx)}</span>
                           </div>
                           <p className="flex-1 text-sm text-[#0077B6]">{pilihan.text || pilihan}</p>
                           <div className="w-6 h-6 rounded-full border-2 border-[#CBD5E1]"></div>

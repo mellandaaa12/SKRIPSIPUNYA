@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, Loader, AlertCircle, Zap, Lightbulb } from "lucid
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../utils/supabase";
 import { updateProgress } from "../utils/api";
+import { highlightCode } from "../utils/highlighter";
 
 // Adapter: convert quiz format from DB (pertanyaan/pilihan/jawabanBenar) to player format
 function adaptQuestion(q: any) {
@@ -21,8 +22,11 @@ function adaptQuestion(q: any) {
   // New format (pertanyaan-based)
   if (q.pertanyaan) {
     choices = (q.pilihan || []).map((p: any) => p.text || p);
-    const correctVal = q.jawabanBenar; // "A", "B", "C", "D"
-    const correctIdx = ["A", "B", "C", "D"].indexOf(correctVal);
+    const correctVal = q.jawabanBenar; // "A", "B", "C", "D", "E"
+    const correctIdx = (q.pilihan || []).findIndex((p: any, idx: number) => {
+      const label = p.label || String.fromCharCode(65 + idx);
+      return label === correctVal;
+    });
     correctText = choices[correctIdx] || "";
     questionText = q.pertanyaan;
     explanation = q.penjelasan || "";
@@ -427,6 +431,32 @@ export default function MengerjakanLatihan() {
               <AnimatePresence mode="wait">
                 <motion.div key={currentQIdx} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                   <h2 className="font-bold text-2xl text-[#0077B6] mb-8 leading-relaxed">{currentQ?.question}</h2>
+                  
+                  {/* Code Viewer inside Quiz */}
+                  {currentQ?.code && (
+                    <div className="mb-6 rounded-2xl overflow-hidden border border-[#334155] bg-[#0F172A] shadow-lg animate-fadeIn text-left">
+                      <div className="bg-[#1E293B] px-4 py-2 flex items-center justify-between border-b border-[#334155]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+                        </div>
+                        <span className="text-[#94A3B8] text-[10px] font-bold tracking-wider uppercase font-mono">soal_code.html</span>
+                      </div>
+                      <div className="p-5 overflow-x-auto custom-scrollbar font-['Fira_Code','Courier_New',monospace]">
+                        <pre 
+                          className="font-mono text-sm leading-relaxed text-[#E2E8F0] whitespace-pre-wrap select-all m-0 bg-transparent p-0 border-0" 
+                          style={{ color: "#E2E8F0" }}
+                          dangerouslySetInnerHTML={{ __html: highlightCode(currentQ.code) }}
+                        />
+                      </div>
+                      {currentQ?.perintahCode && (
+                        <div className="bg-[#1E293B] px-5 py-3 border-t border-[#334155]">
+                          <p className="text-xs text-[#94A3B8] italic font-semibold">{currentQ.perintahCode}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Hint Display */}
                   {showHint && (

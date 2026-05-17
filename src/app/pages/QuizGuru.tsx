@@ -36,10 +36,7 @@ export default function QuizGuru() {
 
   // Form state untuk tambah soal
   const [pertanyaan, setPertanyaan] = useState("");
-  const [pilihanA, setPilihanA] = useState("");
-  const [pilihanB, setPilihanB] = useState("");
-  const [pilihanC, setPilihanC] = useState("");
-  const [pilihanD, setPilihanD] = useState("");
+  const [pilihanList, setPilihanList] = useState<string[]>(["", "", "", ""]);
   const [jawabanBenar, setJawabanBenar] = useState("");
   const [bantuan, setBantuan] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
@@ -58,20 +55,23 @@ export default function QuizGuru() {
   }, [step]);
 
   const handleTambahSoal = () => {
-    if (!pertanyaan || !pilihanA || !pilihanB || !pilihanC || !pilihanD || !jawabanBenar || !bantuan) {
-      toast.error("Semua field harus diisi!");
+    if (!pertanyaan || !jawabanBenar || !bantuan) {
+      toast.error("Pertanyaan, jawaban benar, dan bantuan harus diisi!");
+      return;
+    }
+
+    if (pilihanList.some(p => !p.trim())) {
+      toast.error("Semua pilihan jawaban harus diisi!");
       return;
     }
 
     const newSoal: Soal = {
       id: Date.now().toString(),
       pertanyaan,
-      pilihan: [
-        { label: "A", text: pilihanA },
-        { label: "B", text: pilihanB },
-        { label: "C", text: pilihanC },
-        { label: "D", text: pilihanD },
-      ],
+      pilihan: pilihanList.map((text, idx) => ({
+        label: String.fromCharCode(65 + idx),
+        text: text
+      })),
       jawabanBenar,
       bantuan,
       code: soalCode,
@@ -82,10 +82,7 @@ export default function QuizGuru() {
     
     // Reset form
     setPertanyaan("");
-    setPilihanA("");
-    setPilihanB("");
-    setPilihanC("");
-    setPilihanD("");
+    setPilihanList(["", "", "", ""]);
     setJawabanBenar("");
     setBantuan("");
     setSoalCode("");
@@ -456,96 +453,75 @@ export default function QuizGuru() {
 
             {/* Pilihan Jawaban */}
             <div className="mb-5">
-              <label className="font-semibold text-sm text-[#0077B6] mb-3 block">
-                Pilihan Jawaban <span className="text-[#EF4444]">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="font-semibold text-sm text-[#0077B6]">
+                  Pilihan Jawaban <span className="text-[#EF4444]">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pilihanList.length >= 8) {
+                      toast.error("Maksimal 8 pilihan jawaban!");
+                      return;
+                    }
+                    setPilihanList([...pilihanList, ""]);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-dashed border-[#56B6C6] text-[10px] font-bold text-[#56B6C6] hover:bg-[#F0F9FF] transition-all"
+                >
+                  <Plus className="w-3 h-3" />
+                  Tambah Opsi ({String.fromCharCode(65 + pilihanList.length)})
+                </button>
+              </div>
               
-              {/* Option A */}
-              <div className="flex items-center gap-3 mb-3">
-                <input
-                  type="radio"
-                  name="jawabanBenar"
-                  checked={jawabanBenar === "A"}
-                  onChange={() => setJawabanBenar("A")}
-                  className="w-5 h-5 accent-[#56B6C6]"
-                />
-                <div className="w-10 h-10 bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] rounded-[1.5rem] flex items-center justify-center">
-                  <p className="font-semibold text-sm text-[#1E40AF]">A</p>
-                </div>
-                <input
-                  type="text"
-                  value={pilihanA}
-                  onChange={(e) => setPilihanA(e.target.value)}
-                  placeholder="Opsi A"
-                  className="flex-1 h-12 px-4 py-3 rounded-[2rem] bg-white/70 border border-[#E2E8F0] text-sm text-[#0077B6] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] focus:border-transparent transition-all duration-200"
-                />
-              </div>
+              {pilihanList.map((pilihan, idx) => {
+                const label = String.fromCharCode(65 + idx);
+                return (
+                  <div key={idx} className="flex items-center gap-3 mb-3 animate-fadeIn">
+                    <input
+                      type="radio"
+                      name="jawabanBenar"
+                      checked={jawabanBenar === label}
+                      onChange={() => setJawabanBenar(label)}
+                      className="w-5 h-5 accent-[#56B6C6]"
+                    />
+                    <div className="w-10 h-10 bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] rounded-[1.5rem] flex items-center justify-center flex-shrink-0">
+                      <p className="font-semibold text-sm text-[#1E40AF]">{label}</p>
+                    </div>
+                    <input
+                      type="text"
+                      value={pilihan}
+                      onChange={(e) => {
+                        const newList = [...pilihanList];
+                        newList[idx] = e.target.value;
+                        setPilihanList(newList);
+                      }}
+                      placeholder={`Opsi ${label}`}
+                      className="flex-1 h-12 px-4 py-3 rounded-[2rem] bg-white/70 border border-[#E2E8F0] text-sm text-[#0077B6] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] focus:border-transparent transition-all duration-200"
+                    />
+                    {pilihanList.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newList = pilihanList.filter((_, i) => i !== idx);
+                          setPilihanList(newList);
+                          if (jawabanBenar === label) {
+                            setJawabanBenar("");
+                          } else if (jawabanBenar.charCodeAt(0) > label.charCodeAt(0)) {
+                            setJawabanBenar(String.fromCharCode(jawabanBenar.charCodeAt(0) - 1));
+                          }
+                        }}
+                        className="text-[#EF4444] hover:bg-[#FEE2E2] w-8 h-8 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                        title="Hapus opsi ini"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
-              {/* Option B */}
-              <div className="flex items-center gap-3 mb-3">
-                <input
-                  type="radio"
-                  name="jawabanBenar"
-                  checked={jawabanBenar === "B"}
-                  onChange={() => setJawabanBenar("B")}
-                  className="w-5 h-5 accent-[#56B6C6]"
-                />
-                <div className="w-10 h-10 bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] rounded-[1.5rem] flex items-center justify-center">
-                  <p className="font-semibold text-sm text-[#1E40AF]">B</p>
-                </div>
-                <input
-                  type="text"
-                  value={pilihanB}
-                  onChange={(e) => setPilihanB(e.target.value)}
-                  placeholder="Opsi B"
-                  className="flex-1 h-12 px-4 py-3 rounded-[2rem] bg-white/70 border border-[#E2E8F0] text-sm text-[#0077B6] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-
-              {/* Option C */}
-              <div className="flex items-center gap-3 mb-3">
-                <input
-                  type="radio"
-                  name="jawabanBenar"
-                  checked={jawabanBenar === "C"}
-                  onChange={() => setJawabanBenar("C")}
-                  className="w-5 h-5 accent-[#56B6C6]"
-                />
-                <div className="w-10 h-10 bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] rounded-[1.5rem] flex items-center justify-center">
-                  <p className="font-semibold text-sm text-[#1E40AF]">C</p>
-                </div>
-                <input
-                  type="text"
-                  value={pilihanC}
-                  onChange={(e) => setPilihanC(e.target.value)}
-                  placeholder="Opsi C"
-                  className="flex-1 h-12 px-4 py-3 rounded-[2rem] bg-white/70 border border-[#E2E8F0] text-sm text-[#0077B6] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-
-              {/* Option D */}
-              <div className="flex items-center gap-3 mb-3">
-                <input
-                  type="radio"
-                  name="jawabanBenar"
-                  checked={jawabanBenar === "D"}
-                  onChange={() => setJawabanBenar("D")}
-                  className="w-5 h-5 accent-[#56B6C6]"
-                />
-                <div className="w-10 h-10 bg-gradient-to-b from-[#DBEAFE] to-[#BFDBFE] rounded-[1.5rem] flex items-center justify-center">
-                  <p className="font-semibold text-sm text-[#1E40AF]">D</p>
-                </div>
-                <input
-                  type="text"
-                  value={pilihanD}
-                  onChange={(e) => setPilihanD(e.target.value)}
-                  placeholder="Opsi D"
-                  className="flex-1 h-12 px-4 py-3 rounded-[2rem] bg-white/70 border border-[#E2E8F0] text-sm text-[#0077B6] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-
-              <p className="text-sm text-[#64748B] mt-2">
-                Pilih radio button untuk menandai jawaban yang benar
+              <p className="text-xs text-[#64748B] mt-2">
+                * Pilih radio button untuk menandai jawaban yang benar. Gunakan tombol + Tambah Opsi untuk menambah opsi (A-H).
               </p>
             </div>
 
@@ -578,10 +554,7 @@ export default function QuizGuru() {
                 onClick={handleTambahSoal}
                 disabled={
                   !pertanyaan ||
-                  !pilihanA ||
-                  !pilihanB ||
-                  !pilihanC ||
-                  !pilihanD ||
+                  pilihanList.some(p => !p.trim()) ||
                   !jawabanBenar ||
                   !bantuan
                 }

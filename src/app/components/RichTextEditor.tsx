@@ -354,7 +354,7 @@ function RichTextEditorInner({
       `}</style>
       
       {/* Toolbar */}
-      <div className="border-b border-[#e2e8f0] p-[8px] flex flex-wrap gap-[4px] bg-[#f8fafc]">
+      <div className="sticky top-0 z-40 p-[8px] flex flex-wrap gap-[4px] bg-[#f8fafc]/95 backdrop-blur border-b border-[#e2e8f0] shadow-sm">
         {/* Text Formatting */}
         <div className="flex gap-[4px] border-r border-[#e2e8f0] pr-[8px]">
           <ToolbarButton

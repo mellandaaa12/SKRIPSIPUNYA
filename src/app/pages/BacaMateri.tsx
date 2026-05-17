@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../utils/supabase";
 import { updateProgress } from "../utils/api";
 import { customPopup } from "../context/PopupContext";
+import { highlightMateriContent } from "../utils/highlighter";
 
 export default function BacaMateri() {
   const navigate = useNavigate();
@@ -308,7 +309,7 @@ export default function BacaMateri() {
             >
               <div 
                 className="prose prose-sm max-w-none prose-headings:text-[#0077B6] prose-p:text-[#475569] prose-strong:text-[#0077B6] prose-code:text-[#0077B6] prose-pre:bg-[#F8FAFC] prose-pre:border prose-pre:border-[#CAF0F8] prose-ul:text-[#475569] prose-ol:text-[#475569]"
-                dangerouslySetInnerHTML={{ __html: step.content?.bacaMateri || step.content || "<p>Konten tidak tersedia</p>" }}
+                dangerouslySetInnerHTML={{ __html: highlightMateriContent(step.content?.bacaMateri || step.content || "<p>Konten tidak tersedia</p>") }}
               />
             </div>
 
