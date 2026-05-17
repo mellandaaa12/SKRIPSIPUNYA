@@ -30,9 +30,9 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
     { label: "Tentang", id: "about" },
   ];
 
-  const navBg = "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)";
+  const navBg = "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 244, 253, 0.85) 100%)";
 
-  const linkColor = "#FFFFFF";
+  const linkColor = "#1A1A2E";
 
   return (
     <header
@@ -46,7 +46,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         background: navBg,
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
-        borderBottom: "none",
+        borderBottom: "1px solid rgba(0, 180, 216, 0.12)",
       }}
     >
       <div
@@ -83,7 +83,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.background = "rgba(0, 180, 216, 0.08)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
@@ -98,23 +98,23 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         <div>
           <button
             style={{
-              background: "#FFFFFF",
-              color: "#0077B6",
+              background: "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)",
+              color: "#FFFFFF",
               fontFamily: "Poppins, sans-serif",
               fontWeight: 800, fontSize: "0.9rem",
               padding: "10px 24px", borderRadius: "12px", border: "none",
               cursor: "pointer", transition: "all 0.3s ease",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
+              boxShadow: "0 10px 28px rgba(0, 119, 182, 0.25)",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "#E8F4FD";
+              (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, #00B4D8 0%, #0077B6 100%)";
               (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.15)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(0, 119, 182, 0.35)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "#FFFFFF";
+              (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)";
               (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.1)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 10px 28px rgba(0, 119, 182, 0.25)";
             }}
             onClick={handleLoginClick}
           >
