@@ -26,8 +26,7 @@ export default function LandingPage() {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(1100px 680px at 50% -10%, rgba(202, 240, 248, 0.95) 0%, rgba(144, 224, 239, 0.55) 42%, rgba(255, 255, 255, 1) 78%), linear-gradient(135deg, rgba(0, 119, 182, 0.03) 0%, rgba(255, 255, 255, 1) 100%)",
+        background: "#E8F4FD",
         position: "relative",
         overflowX: "hidden",
       }}

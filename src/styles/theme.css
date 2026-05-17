@@ -2,9 +2,9 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
+  --background: #E8F4FD;
   /* Default text should stay black (modern, readable) */
-  --foreground: #0f172a;
+  --foreground: #1A1A2E;
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
@@ -140,10 +140,11 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background;
+    color: #4A4A6A;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
-    background-color: #ffffff;
+    background-color: var(--background);
     background-image:
       radial-gradient(circle at 72% 12%, rgba(0, 119, 182, 0.28) 0, rgba(0, 119, 182, 0.18) 18rem, transparent 34rem),
       radial-gradient(circle at 28% 72%, rgba(0, 119, 182, 0.2) 0, rgba(0, 119, 182, 0.12) 20rem, transparent 38rem),
@@ -185,24 +186,28 @@
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    color: #1A1A2E;
   }
 
   h2 {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    color: #1A1A2E;
   }
 
   h3 {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    color: #1A1A2E;
   }
 
   h4 {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    color: #1A1A2E;
   }
 
   label {

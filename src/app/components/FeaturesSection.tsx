@@ -61,7 +61,7 @@ export default function FeaturesSection({ theme }: FeaturesSectionProps) {
   const cardBg = "rgba(255,255,255,0.9)";
   const cardBorder = "1px solid rgba(0, 180, 216, 0.18)";
   const cardTitleColor = "var(--foreground)";
-  const cardDescColor = "#64748B";
+  const cardDescColor = "#4A4A6A";
 
   return (
     <section id="features" style={{
@@ -83,7 +83,7 @@ export default function FeaturesSection({ theme }: FeaturesSectionProps) {
             Kenapa Memilih <span className="text-brand-gradient">Study With Me</span>?
           </h2>
           <p style={{
-            color: "#64748B",
+            color: "#4A4A6A",
             fontFamily: "Nunito, sans-serif", fontSize: "1.1rem", lineHeight: 1.7,
             maxWidth: "600px", margin: "0 auto", fontWeight: 600,
           }}>

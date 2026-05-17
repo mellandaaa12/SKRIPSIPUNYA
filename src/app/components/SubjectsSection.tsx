@@ -64,7 +64,7 @@ export default function SubjectsSection() {
             Pilih <span className="text-brand-gradient">Jurusanmu</span>
           </h2>
           <p style={{
-            color: "#64748B",
+            color: "#4A4A6A",
             fontFamily: "Nunito, sans-serif", fontSize: "1.1rem", lineHeight: 1.7,
             maxWidth: "600px", margin: "0 auto", fontWeight: 600,
           }}>
@@ -155,7 +155,7 @@ export default function SubjectsSection() {
                   fontFamily: "Nunito, sans-serif",
                   fontWeight: 600,
                   fontSize: "0.85rem",
-                  color: "#64748B",
+                  color: "#4A4A6A",
                   lineHeight: 1.6,
                   margin: 0,
                 }}>

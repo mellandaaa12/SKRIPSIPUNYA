@@ -55,7 +55,7 @@ export default function Footer() {
                 </div>
               </div>
             </div>
-            <p style={{ color: "#64748B", fontFamily: "Nunito, sans-serif", fontSize: "0.9rem", lineHeight: 1.8, maxWidth: "280px", fontWeight: 500, margin: "0 0 24px" }}>
+            <p style={{ color: "#4A4A6A", fontFamily: "Nunito, sans-serif", fontSize: "0.9rem", lineHeight: 1.8, maxWidth: "280px", fontWeight: 500, margin: "0 0 24px" }}>
               Platform pembelajaran eksklusif untuk ekosistem SMK — siswa, guru, dan admin
               dalam satu sistem yang terintegrasi.
             </p>
@@ -134,7 +134,7 @@ export default function Footer() {
           alignItems: "center", flexWrap: "wrap", gap: "16px" 
         }}>
           <p style={{ 
-            color: "#334155", 
+            color: "#4A4A6A", 
             fontFamily: "Nunito, sans-serif", fontSize: "0.85rem", 
             fontWeight: 500, margin: 0 
           }}>
@@ -145,7 +145,7 @@ export default function Footer() {
               <span
                 key={i}
                 style={{ 
-                  color: "#64748B", 
+                  color: "#4A4A6A", 
                   fontFamily: "Nunito, sans-serif", fontSize: "0.82rem", 
                   fontWeight: 500, padding: "4px 12px", borderRadius: "50px", 
                   background: "rgba(0,119,182,0.08)", 

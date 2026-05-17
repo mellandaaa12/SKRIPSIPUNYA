@@ -50,24 +50,11 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
             🚀 Siap Memulai?
           </span>
           <motion.h1
-            animate={{
-              backgroundPosition: ["0% 50%", "50% 50%", "100% 50%"],
-            }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              ease: "easeInOut" 
-            }}
             style={{
               fontFamily: "Poppins, sans-serif", fontWeight: 800,
               fontSize: "clamp(2.8rem, 5.5vw, 4.5rem)",
               margin: "0 0 16px", lineHeight: 1.2, position: "relative", zIndex: 1, textAlign: "center",
-              background:
-                "linear-gradient(135deg, #023E8A 0%, #0077B6 35%, #00B4D8 72%, #023E8A 100%)",
-              backgroundSize: "280% 280%",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              color: "transparent",
+              color: "#1A1A2E",
             }}
           >
             Study With Me
@@ -83,23 +70,23 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
           <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <button
               style={{
-                background: "#FFB703",
-                color: "#1A1A2E",
+                background: "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)",
+                color: "#FFFFFF",
                 fontFamily: "Poppins, sans-serif",
                 fontWeight: 800, fontSize: "1rem",
                 padding: "14px 36px", borderRadius: "50px", border: "none",
                 cursor: "pointer", transition: "all 0.3s ease",
-                boxShadow: "0 10px 28px rgba(255, 183, 3, 0.35)",
+                boxShadow: "0 10px 28px rgba(0, 119, 182, 0.25)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "#e5a502";
+                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, #00B4D8 0%, #0077B6 100%)";
                 (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-3px) scale(1.05)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 14px 34px rgba(255, 183, 3, 0.45)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 14px 34px rgba(0, 119, 182, 0.35)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "#FFB703";
+                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)";
                 (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0) scale(1)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 10px 28px rgba(255, 183, 3, 0.35)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 10px 28px rgba(0, 119, 182, 0.25)";
               }}
               onClick={handleLoginClick}
             >

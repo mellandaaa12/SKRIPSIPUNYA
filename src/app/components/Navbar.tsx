@@ -30,11 +30,9 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
     { label: "Tentang", id: "about" },
   ];
 
-  const navBg = scrolled
-    ? "rgba(255, 255, 255, 0.95)"
-    : "rgba(255, 255, 255, 0.85)";
+  const navBg = "#0077B6";
 
-  const linkColor = "var(--foreground)";
+  const linkColor = "#FFFFFF";
 
   return (
     <header
@@ -66,6 +64,15 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "auto" }}>
+          <span style={{
+            fontFamily: "Poppins, sans-serif",
+            fontWeight: 900,
+            fontSize: "1.4rem",
+            color: "#FFFFFF",
+            letterSpacing: "-0.5px"
+          }}>
+            Study With Me
+          </span>
         </div>
 
         {/* Nav Links - Desktop */}
@@ -87,7 +94,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(0, 119, 182, 0.08)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
@@ -102,22 +109,23 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         <div>
           <button
             style={{
-              background:
-                "linear-gradient(135deg, var(--brand-900) 0%, var(--brand-700) 55%, var(--brand-400) 100%)",
-              color: "#FFFFFF",
+              background: "#FFFFFF",
+              color: "#0077B6",
               fontFamily: "Poppins, sans-serif",
               fontWeight: 800, fontSize: "0.9rem",
               padding: "10px 24px", borderRadius: "12px", border: "none",
               cursor: "pointer", transition: "all 0.3s ease",
-              boxShadow: "0 10px 28px rgba(3, 4, 94, 0.2)",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
             }}
             onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "#E8F4FD";
               (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(3, 4, 94, 0.3)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.15)";
             }}
             onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "#FFFFFF";
               (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 10px 28px rgba(3, 4, 94, 0.2)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.1)";
             }}
             onClick={handleLoginClick}
           >

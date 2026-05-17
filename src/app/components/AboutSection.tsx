@@ -56,7 +56,7 @@ export default function AboutSection() {
             Mulai <span className="text-brand-gradient">Belajar</span> dalam 3 Langkah
           </h2>
           <p style={{
-            color: "#64748B",
+            color: "#4A4A6A",
             fontFamily: "Nunito, sans-serif", fontSize: "1.1rem", lineHeight: 1.7,
             maxWidth: "600px", margin: "0 auto", fontWeight: 600,
           }}>
@@ -149,7 +149,7 @@ export default function AboutSection() {
                 fontFamily: "Nunito, sans-serif",
                 fontWeight: 600,
                 fontSize: "0.9rem",
-                color: "#64748B",
+                color: "#4A4A6A",
                 lineHeight: 1.7,
                 margin: "0 0 20px",
                 textAlign: "center",
@@ -171,7 +171,7 @@ export default function AboutSection() {
                       fontSize: "0.75rem",
                       fontFamily: "Nunito, sans-serif",
                       fontWeight: 600,
-                      color: "#64748B",
+                      color: "#4A4A6A",
                     }}
                   >
                     ✓ {item}
