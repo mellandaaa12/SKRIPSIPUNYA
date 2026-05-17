@@ -30,7 +30,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
     { label: "Tentang", id: "about" },
   ];
 
-  const navBg = "#00B4D8";
+  const navBg = "linear-gradient(135deg, #0077B6 0%, #00B4D8 100%)";
 
   const linkColor = "#FFFFFF";
 
