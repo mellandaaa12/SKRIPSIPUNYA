@@ -217,7 +217,9 @@ export default function MengerjakanLatihan() {
     }
   };
 
-  const handleNextOrSubmit = async () => {
+  // handleNextOrSubmit: optionally receives the latest correct count from handleCheckAnswer
+  // to avoid any stale-closure risk on the very last question
+  const handleNextOrSubmit = async (latestCorrectCount?: number) => {
     if (currentQIdx < questions.length - 1) {
       const nextIdx = currentQIdx + 1;
       const nextQ = questions[nextIdx];
@@ -237,16 +239,20 @@ export default function MengerjakanLatihan() {
         setFilledBlanks([]);
       }
     } else {
-      await handleSubmit();
+      // Pass the explicit count to guarantee correct scoring even if state lags
+      await handleSubmit(latestCorrectCount);
     }
   };
 
-  const handleSubmit = async () => {
+  // explicitCorrectCount: used to avoid stale state on the last question
+  const handleSubmit = async (explicitCorrectCount?: number) => {
     if (!step || !pembelajaranId || !stepId || !user) return;
     setSubmitting(true);
     try {
       const total = questions.length || 1;
-      const finalScore = Math.round((correctCount / total) * 100);
+      // Prefer explicitly passed count (avoids stale closure); fall back to state
+      const usedCorrectCount = typeof explicitCorrectCount === 'number' ? explicitCorrectCount : correctCount;
+      const finalScore = Math.round((usedCorrectCount / total) * 100);
       setScore(finalScore);
       setShowResult(true);
 
@@ -705,7 +711,7 @@ export default function MengerjakanLatihan() {
                       Periksa
                     </button>
                   ) : (
-                    <button onClick={handleNextOrSubmit} disabled={submitting} className={`font-bold text-base py-3 px-10 min-w-[180px] rounded-full transition-all text-white hover:translate-y-1 ${feedback === 'correct' ? 'bg-[#16A34A] shadow-[0_4px_0_#15803D]' : 'bg-[#EF4444] shadow-[0_4px_0_#B91C1C]'} hover:shadow-[0_2px_0_rgba(0,0,0,0.2)]`}>
+                    <button onClick={() => handleNextOrSubmit()} disabled={submitting} className={`font-bold text-base py-3 px-10 min-w-[180px] rounded-full transition-all text-white hover:translate-y-1 ${feedback === 'correct' ? 'bg-[#16A34A] shadow-[0_4px_0_#15803D]' : 'bg-[#EF4444] shadow-[0_4px_0_#B91C1C]'} hover:shadow-[0_2px_0_rgba(0,0,0,0.2)]`}>
                       {submitting ? <Loader className="w-5 h-5 animate-spin" /> : currentQIdx < questions.length - 1 ? "Lanjut →" : "Selesai ✓"}
                     </button>
                   )}

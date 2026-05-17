@@ -850,11 +850,17 @@ export default function DetailMateriGuru() {
                 <div className="flex flex-col gap-3">
                   {siswaList.map((siswa) => {
                     const rows = studentProgress[siswa.id] || [];
-                    const scores = rows.filter((p: any) => p.score !== null && p.score !== undefined);
-                    const avg = scores.length > 0 ? Math.round(scores.reduce((s: number, p: any) => s + p.score, 0) / scores.length) : 0;
                     const steps = pembelajaran.steps || [];
                     const pct = steps.length > 0 ? Math.round((rows.filter((p: any) => p.completed).length / steps.length) * 100) : 0;
                     const segments = buildSegmentsForPembelajaran(steps, rows, pembelajaran.judul);
+                    // Show quiz-only avg score (not mixed with code editor)
+                    const quizRows = rows.filter((p: any) =>
+                      p.score !== null && p.score !== undefined &&
+                      p.answers?.quiz_done === true
+                    );
+                    const quizAvg = quizRows.length > 0
+                      ? Math.round(quizRows.reduce((s: number, p: any) => s + p.score, 0) / quizRows.length)
+                      : null;
                     return (
                       <div key={siswa.id} className="flex flex-col gap-3 p-5 rounded-[2rem] bg-white/70 border border-[#E2E8F0]/50 overflow-visible">
                         <div className="flex items-center gap-4">
@@ -868,9 +874,15 @@ export default function DetailMateriGuru() {
                                 <div className="h-full rounded-full bg-[#10B981] transition-all" style={{ width: `${pct}%` }} />
                               </div>
                               <span className="text-xs text-[#7A7E86] w-10 text-right flex-shrink-0">{pct}%</span>
-                              {scores.length > 0 && (
-                                <span className="text-sm font-bold ml-2 flex-shrink-0" style={{ color: avg >= 85 ? "#10B981" : avg >= 70 ? "#F59E0B" : "#EF4444" }}>
-                                  {avg}
+                              {quizAvg !== null && (
+                                <span
+                                  className="text-xs font-bold ml-2 flex-shrink-0 px-2.5 py-1 rounded-full"
+                                  style={{
+                                    background: quizAvg >= 85 ? '#D1FAE5' : quizAvg >= 70 ? '#FEF3C7' : '#FEE2E2',
+                                    color: quizAvg >= 85 ? '#065F46' : quizAvg >= 70 ? '#92400E' : '#991B1B'
+                                  }}
+                                >
+                                  Quiz: {quizAvg}
                                 </span>
                               )}
                             </div>

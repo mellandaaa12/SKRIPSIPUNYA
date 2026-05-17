@@ -48,6 +48,9 @@ export default function ProgressiveLearning() {
   const [attemptCount, setAttemptCount] = useState(0);
   const [wrongQuestions, setWrongQuestions] = useState<any[]>([]);
 
+  // Flag to trigger refleksi modal right after quiz modal closes (if all steps done)
+  const [quizJustFinishedAllSteps, setQuizJustFinishedAllSteps] = useState(false);
+
   // Quiz preview mode state
   const [isQuizPreviewMode, setIsQuizPreviewMode] = useState(false);
   const [quizSubmittedAnswers, setQuizSubmittedAnswers] = useState<{ [key: number]: any }>({});
@@ -183,7 +186,15 @@ export default function ProgressiveLearning() {
         return;
       }
       
-      setPembelajaran(pembelajaranData);
+      // Normalize snake_case DB fields to camelCase so popup conditions work
+      const normalizedPembelajaran = {
+        ...pembelajaranData,
+        enableReflection: pembelajaranData.enableReflection ?? pembelajaranData.enable_reflection ?? false,
+        reflectionTemplate: pembelajaranData.reflectionTemplate ?? pembelajaranData.reflection_template ?? "Standar",
+        pertanyaanKendala: pembelajaranData.pertanyaanKendala ?? pembelajaranData.pertanyaan_kendala ?? "",
+        pertanyaanKesan: pembelajaranData.pertanyaanKesan ?? pembelajaranData.pertanyaan_kesan ?? "",
+      };
+      setPembelajaran(normalizedPembelajaran);
       setUserProfile(profileData?.user || null);
       
       // Find progress for this pembelajaran
@@ -582,6 +593,17 @@ export default function ProgressiveLearning() {
       const progressData = await getProgress(user.id);
       const thisProgress = progressData.find((p: any) => p.pembelajaranId === pembelajaranId);
       setProgress(thisProgress || { steps: {} });
+
+      // After progress is updated, check if ALL steps are now complete
+      // and set a flag so we can trigger refleksi after closing the quiz modal
+      if (passed && pembelajaran?.steps) {
+        const updatedSteps = thisProgress?.steps || {};
+        const allDone = pembelajaran.steps.every((s: any) => updatedSteps[s.id]?.completed === true);
+        if (allDone) {
+          // Mark that we should show refleksi after closing quiz
+          setQuizJustFinishedAllSteps(true);
+        }
+      }
     } catch (error) {
       console.error("Failed to submit quiz:", error);
     }
@@ -590,6 +612,8 @@ export default function ProgressiveLearning() {
   const handleCloseQuizModal = () => {
     // Only allow closing after quiz is completed
     if (showResult) {
+      const shouldShowRefleksi = quizJustFinishedAllSteps;
+      setQuizJustFinishedAllSteps(false);
       setShowQuizModal(false);
       setQuizStep(null);
       setQuestions([]);
@@ -601,6 +625,13 @@ export default function ProgressiveLearning() {
       setSelectedOptionIndices([]);
       setFilledBlanks([]);
       setShowHintConfirm(false);
+
+      // Directly trigger refleksi modal if all steps done and reflection enabled
+      if (shouldShowRefleksi && pembelajaran?.enableReflection && !hasReflection) {
+        setTimeout(() => {
+          setShowReflectionModal(true);
+        }, 800);
+      }
     }
   };
 
@@ -639,12 +670,15 @@ export default function ProgressiveLearning() {
     if (!codeEditorStep || !pembelajaranId || !user) return;
     setSavingCode(true);
     try {
-      const score = studentCode.trim().length > 30 ? 80 : 40;
       const requiredChecks: string[] = codeEditorStep.content?.requiredChecks || [];
-      let finalScore = score;
+      let finalScore: number;
       if (requiredChecks.length > 0) {
+        // Score based on automated checks: (passed / total) * 100
         const passedChecks = requiredChecks.filter((needle: string) => studentCode.includes(needle)).length;
         finalScore = Math.round((passedChecks / requiredChecks.length) * 100);
+      } else {
+        // No automated checks → full score for any valid (non-empty) submission
+        finalScore = studentCode.trim().length > 0 ? 100 : 0;
       }
       
       const passed = finalScore >= (codeEditorStep.content?.nilaiMinimalTugas || 75);
@@ -693,6 +727,22 @@ export default function ProgressiveLearning() {
       setProgress(thisProgress || { steps: {} });
       
       if (passed) {
+        // Check if ALL steps are complete — if so, show refleksi after closing code editor
+        if (pembelajaran?.steps) {
+          const updatedSteps = thisProgress?.steps || {};
+          const allDone = pembelajaran.steps.every((s: any) => updatedSteps[s.id]?.completed === true);
+          if (allDone && pembelajaran?.enableReflection && !hasReflection) {
+            setTimeout(() => {
+              setShowCodeEditorModal(false);
+              setCodeEditorStep(null);
+              setStudentCode("");
+              setCodeSubmitted(false);
+              setIsCodePreviewMode(false);
+              setTimeout(() => setShowReflectionModal(true), 800);
+            }, 1500);
+            return; // Skip default close
+          }
+        }
         setTimeout(() => handleCloseCodeEditorModal(), 1500);
       }
     } catch (error) {
