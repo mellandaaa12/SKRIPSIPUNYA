@@ -25,7 +25,7 @@ function adaptQuestion(q: any) {
     const correctVal = q.jawabanBenar; // "A", "B", "C", "D", "E"
     const correctIdx = (q.pilihan || []).findIndex((p: any, idx: number) => {
       const label = p.label || String.fromCharCode(65 + idx);
-      return label === correctVal;
+      return label.toString().trim().toUpperCase() === correctVal?.toString().trim().toUpperCase();
     });
     correctText = choices[correctIdx] || "";
     questionText = q.pertanyaan;
@@ -188,7 +188,10 @@ export default function MengerjakanLatihan() {
       const correctAnswer = currentQ.options[currentQ.correctAnswer];
       const userAnswer = filledBlanks.join(' ');
       
-      if (userAnswer === correctAnswer) {
+      const cleanUser = userAnswer.trim().toLowerCase().replace(/\s+/g, ' ');
+      const cleanCorrect = correctAnswer.trim().toLowerCase().replace(/\s+/g, ' ');
+      
+      if (cleanUser === cleanCorrect) {
         setFeedback('correct');
         setCorrectCount(prev => prev + 1);
       } else {
