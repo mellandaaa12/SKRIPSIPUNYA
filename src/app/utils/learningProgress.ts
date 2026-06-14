@@ -7,6 +7,30 @@ export interface StepAttemptMeta {
   attempts: number;
   statusLabel: string;
   needsAttention: boolean;
+  completedAt?: string;
+}
+
+export function formatIndonesianDate(isoString: string | null | undefined): string {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    
+    const day = d.getDate();
+    const months = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    
+    return `${day} ${month} ${year} ${hours}:${minutes}`;
+  } catch (e) {
+    return "";
+  }
 }
 
 /**
@@ -17,8 +41,9 @@ export interface StepAttemptMeta {
  * - Materi baca selesai tanpa quiz: attempts 0 & completed → hijau
  */
 export function segmentMetaFromProgressRow(
-  row: { completed?: boolean; answers?: any; score?: number } | null | undefined,
-  stepTitle: string
+  row: { completed?: boolean; answers?: any; score?: number; created_at?: string; updated_at?: string } | null | undefined,
+  stepTitle: string,
+  stepId?: string
 ): StepAttemptMeta & { stepTitle: string } {
   const title = stepTitle || "Step";
   if (!row) {
@@ -36,6 +61,22 @@ export function segmentMetaFromProgressRow(
   const completed = row.completed === true;
   const lowScore = typeof row.score === 'number' && row.score < 60;
 
+  const completedAt = (stepId === "step_1779276674419_zvtaa5ys1" || stepId === "step_1780125298485_al27x8awp" || stepId === "step_1780125325850_yzei7ggss" || stepId === "step_1780125351851_y4aa16fu3")
+    ? formatIndonesianDate(row.updated_at || row.created_at)
+    : undefined;
+
+  const isPostTest = title.toUpperCase().includes("POST TEST");
+  if (isPostTest) {
+    return {
+      variant: "green",
+      attempts,
+      statusLabel: "Selesai",
+      needsAttention: false,
+      stepTitle: title,
+      completedAt,
+    };
+  }
+
   if (attempts >= 3 || needsHelp || lowScore) {
     return {
       variant: "red",
@@ -43,6 +84,7 @@ export function segmentMetaFromProgressRow(
       statusLabel: lowScore ? "Nilai rendah" : "Butuh perhatian",
       needsAttention: true,
       stepTitle: title,
+      completedAt,
     };
   }
   if (attempts === 2) {
@@ -52,6 +94,7 @@ export function segmentMetaFromProgressRow(
       statusLabel: completed ? "Selesai (2 percobaan)" : "Percobaan ke-2",
       needsAttention: false,
       stepTitle: title,
+      completedAt,
     };
   }
   if (attempts === 1) {
@@ -62,6 +105,7 @@ export function segmentMetaFromProgressRow(
         statusLabel: "Langsung berhasil",
         needsAttention: false,
         stepTitle: title,
+        completedAt,
       };
     }
     return {
@@ -70,6 +114,7 @@ export function segmentMetaFromProgressRow(
       statusLabel: "Belum lulus (1 percobaan)",
       needsAttention: false,
       stepTitle: title,
+      completedAt,
     };
   }
 
@@ -80,6 +125,7 @@ export function segmentMetaFromProgressRow(
       statusLabel: "Materi selesai",
       needsAttention: false,
       stepTitle: title,
+      completedAt,
     };
   }
   if (completed && quizDone) {
@@ -89,6 +135,7 @@ export function segmentMetaFromProgressRow(
       statusLabel: "Selesai",
       needsAttention: false,
       stepTitle: title,
+      completedAt,
     };
   }
 
@@ -98,6 +145,7 @@ export function segmentMetaFromProgressRow(
     statusLabel: "Belum selesai",
     needsAttention: false,
     stepTitle: title,
+    completedAt,
   };
 }
 
@@ -124,7 +172,7 @@ export function buildSegmentsForPembelajaran(
   return steps.map((s) => {
     const row = byStep.get(s.id);
     const label = [pembelajaranLabel, s.judul || s.title || `Step`].filter(Boolean).join(" · ");
-    const meta = segmentMetaFromProgressRow(row, label);
+    const meta = segmentMetaFromProgressRow(row, label, s.id);
     return { ...meta, stepId: s.id };
   });
 }
@@ -143,7 +191,7 @@ export function buildSegmentsForStudentClass(
     for (const s of steps) {
       const row = forModul.find((r) => r.step_id === s.id);
       const label = `${m.judul || m.title || "Modul"} · ${s.judul || s.title || "Step"}`;
-      const meta = segmentMetaFromProgressRow(row, label);
+      const meta = segmentMetaFromProgressRow(row, label, s.id);
       segments.push({ ...meta, stepId: s.id });
     }
   }

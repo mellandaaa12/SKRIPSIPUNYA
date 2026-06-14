@@ -94,7 +94,7 @@ export function SideBarMurid() {
     },
     {
       path: "/schedule",
-      label: "Schedule",
+      label: "Jadwal",
       icon: Calendar,
     },
   ];
@@ -189,7 +189,7 @@ export function SideBarMurid() {
             className="flex items-center gap-3 px-4 py-3 rounded-[2rem] text-sm font-medium text-[#64748B] hover:bg-red-50 hover:text-[#DC2626] transition-all duration-200"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Keluar</span>
           </button>
         </div>
       </div>

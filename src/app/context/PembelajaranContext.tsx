@@ -43,6 +43,7 @@ interface Pembelajaran {
   reflectionTemplate?: string;
   pertanyaanKendala?: string;
   pertanyaanKesan?: string;
+  ueqQuestions?: any[];
   steps: Step[];
   createdAt: string;
 }
@@ -50,7 +51,7 @@ interface Pembelajaran {
 interface PembelajaranContextType {
   pembelajaranList: Pembelajaran[];
   loading: boolean;
-  addPembelajaran: (pembelajaran: Omit<Pembelajaran, "id" | "createdAt" | "steps">, userId?: string) => Promise<string>;
+  addPembelajaran: (pembelajaran: Omit<Pembelajaran, "id" | "createdAt" | "steps" | "ueqQuestions">, userId?: string) => Promise<string>;
   getPembelajaranById: (id: string) => Pembelajaran | undefined;
   getPembelajaranByKelasId: (kelasId: string) => Promise<Pembelajaran[]>;
   addStep: (pembelajaranId: string, step: Omit<Step, "id" | "number">) => Promise<void>;
@@ -99,6 +100,7 @@ const mapRow = (row: any): Pembelajaran => ({
   reflectionTemplate: row.reflection_template || "Standar",
   pertanyaanKendala: row.pertanyaan_kendala || "Apa kendala yang kamu alami?",
   pertanyaanKesan: row.pertanyaan_kesan || "Bagaimana pendapatmu tentang pembelajaran hari ini?",
+  ueqQuestions: Array.isArray(row.ueq_questions) ? row.ueq_questions : [],
   steps: Array.isArray(row.steps) ? row.steps : [],
   createdAt: row.created_at,
 });
@@ -168,6 +170,7 @@ export function PembelajaranProvider({ children }: { children: React.ReactNode }
         reflection_template: pembelajaran.reflectionTemplate || "Standar",
         pertanyaan_kendala: pembelajaran.pertanyaanKendala || "Apa kendala yang kamu alami?",
         pertanyaan_kesan: pembelajaran.pertanyaanKesan || "Bagaimana pendapatmu tentang pembelajaran hari ini?",
+        ueq_questions: [],
         steps: [],
         created_by: actualUserId,
       };

@@ -193,9 +193,6 @@ export default function KelolaKelas() {
       .on("postgres_changes", { event: "*", schema: "public", table: "pembelajaran" }, () => {
         if (viewMode === "detail" && selectedClass?.id) void fetchClassDetails(selectedClass.id);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => {
-        if (viewMode === "detail" && selectedClass?.id) void fetchClassDetails(selectedClass.id);
-      })
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
@@ -537,7 +534,7 @@ export default function KelolaKelas() {
     { id: "kelas", label: "Kelola Kelas", icon: BookOpen, path: "/dashboard-admin/kelola-kelas" },
     { id: "guru", label: "Kelola Guru", icon: Users, path: "/dashboard-admin/kelola-guru" },
     { id: "siswa", label: "Kelola Siswa", icon: Users, path: "/dashboard-admin/kelola-siswa" },
-    { id: "monitoring", label: "Monitoring", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
+    { id: "monitoring", label: "Monitor", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
   ];
 
   return (

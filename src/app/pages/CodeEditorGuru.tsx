@@ -10,6 +10,7 @@ import { usePembelajaran } from "../context/PembelajaranContext";
 import { useAuth } from "../context/AuthContext";
 import CodeEditor from "../components/CodeEditor";
 import { toast } from "sonner";
+import { translateError } from "../utils/errorTranslator";
 
 export default function CodeEditorGuru() {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export default function CodeEditorGuru() {
 
   const handleSimpan = async () => {
     if (!materiId || !stepId) {
-      toast.error("ID materi atau step tidak ditemukan!");
+      toast.error("ID materi atau langkah tidak ditemukan!");
       return;
     }
 
@@ -50,13 +51,13 @@ export default function CodeEditorGuru() {
         taskExample: taskExample,
       });
       
-      toast.success("Code Editor berhasil disimpan!");
+      toast.success("Editor Kode berhasil disimpan!");
       
       navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save:", error);
       const message = error instanceof Error ? error.message : String(error);
-      toast.error(`Gagal menyimpan code editor: ${message || "Silakan coba lagi."}`);
+      toast.error(translateError(error?.message || error) || `Gagal menyimpan editor kode: ${message || "Silakan coba lagi."}`);
       setSaving(false);
     }
   };
@@ -64,7 +65,7 @@ export default function CodeEditorGuru() {
   if (!step) {
     return (
       <div className="min-h-screen w-full relative flex items-center justify-center" style={{ background: "transparent", backgroundAttachment: "fixed" }}>
-        <p className="font-['Poppins'] text-[18px] text-[#64748b]">Step tidak ditemukan</p>
+        <p className="font-['Poppins'] text-[18px] text-[#64748b]">Langkah tidak ditemukan</p>
       </div>
     );
   }
@@ -196,7 +197,7 @@ export default function CodeEditorGuru() {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Simpan Code Editor</span>
+                    <span className="text-sm font-semibold">Simpan Editor Kode</span>
                   </>
                 )}
               </button>

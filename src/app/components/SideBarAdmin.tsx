@@ -55,7 +55,7 @@ export function SideBarAdmin() {
     },
     {
       path: "/dashboard-admin/monitoring",
-      label: "Monitoring",
+      label: "Monitor",
       icon: Activity,
     },
     {
@@ -144,7 +144,7 @@ export function SideBarAdmin() {
           >
             <LogOut className="w-5 h-5" />
             <span className="text-sm font-semibold">
-              {preferences.language === "id" ? "Keluar" : "Logout"}
+              Keluar
             </span>
           </button>
         </div>

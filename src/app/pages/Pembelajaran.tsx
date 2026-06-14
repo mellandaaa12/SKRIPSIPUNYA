@@ -372,7 +372,7 @@ export default function Pembelajaran() {
                               ? 'text-[#F59E0B]'
                               : 'text-[#EF4444]'
                           }`}>
-                            {progressValue}% Complete
+                            {progressValue}% {t.progress}
                           </span>
                         </div>
                         {/* Tiny live progress bar */}

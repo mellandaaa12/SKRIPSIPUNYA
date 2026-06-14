@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import RichTextEditor from "../components/RichTextEditor";
 import { toast } from "sonner";
 import { supabase } from "../utils/supabase";
+import { translateError } from "../utils/errorTranslator";
 
 export default function BacaMateriGuru() {
   const navigate = useNavigate();
@@ -57,9 +58,9 @@ export default function BacaMateriGuru() {
             setKontenMateri(found.content.bacaMateri);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error loading step:", err);
-        toast.error("Gagal memuat data step.");
+        toast.error(translateError(err?.message || err) || "Gagal memuat data langkah.");
       } finally {
         setLoadingStep(false);
       }
@@ -109,7 +110,7 @@ export default function BacaMateriGuru() {
       navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}`);
     } catch (error: any) {
       console.error("Failed to save:", error);
-      toast.error(`Gagal menyimpan materi: ${error.message || "Silakan coba lagi."}`);
+      toast.error(translateError(error?.message || error) || "Gagal menyimpan materi. Silakan coba lagi.");
       setSaving(false);
     }
   };
@@ -129,7 +130,7 @@ export default function BacaMateriGuru() {
     return (
       <div className="min-h-screen w-full relative flex items-center justify-center" style={{ background: "transparent", backgroundAttachment: "fixed" }}>
         <div className="flex flex-col items-center gap-3">
-          <p className="font-['Poppins'] text-[18px] text-[#64748b]">Step tidak ditemukan</p>
+          <p className="font-['Poppins'] text-[18px] text-[#64748b]">Langkah tidak ditemukan</p>
           <button
             onClick={() => navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}`)}
             className="px-4 py-2 bg-[#0077B6] text-white rounded-full text-sm"

@@ -141,7 +141,7 @@ export default function BuatMateriGuru() {
               {/* ── INFO BOX ──────────────────────────────────── */}
               <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-[2rem] p-5">
                 <p className="text-sm text-[#1E40AF] leading-relaxed">
-                  💡 <strong>Tips:</strong> Setelah membuat materi ini, Anda bisa menambahkan step-step pembelajaran di dalamnya. Setiap step berisi konten baca materi dan latihan soal (quiz).
+                  💡 <strong>Tips:</strong> Setelah membuat materi ini, Anda bisa menambahkan langkah-langkah pembelajaran di dalamnya. Setiap langkah berisi konten baca materi dan latihan soal (quiz).
                 </p>
               </div>
 

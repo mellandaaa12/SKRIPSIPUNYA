@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { Mail, Lock, Eye, EyeOff, ChevronLeft, AlertCircle, LogOut, ArrowRight, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { translateError } from "../utils/errorTranslator";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ export default function LoginPage() {
       } else if (err.message?.includes("User not found")) {
         errorMessage = "⚠️ Akun tidak ditemukan. Hubungi administrator.";
       } else {
-        errorMessage += err.message || "Terjadi kesalahan. Silakan coba lagi.";
+        errorMessage += translateError(err.message);
       }
       
       setError(errorMessage);

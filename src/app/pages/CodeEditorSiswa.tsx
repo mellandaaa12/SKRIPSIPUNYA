@@ -357,7 +357,7 @@ export default function CodeEditorSiswa() {
                     className="flex-1 py-3 px-4 bg-gradient-to-r from-[#0077B6] to-[#0077B6] rounded-[2rem] text-white font-semibold text-sm shadow-[0_8px_24px_-4px_rgba(0,119,182,0.2)] hover:shadow-[0_12px_32px_-4px_rgba(0,119,182,0.3)] transition-all flex items-center justify-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
-                    Quiz
+                    Kuis
                   </button>
                 )}
               </div>

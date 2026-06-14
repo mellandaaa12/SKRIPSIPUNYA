@@ -13,6 +13,7 @@ import { buildSegmentsForPembelajaran } from "../utils/learningProgress";
 import { LearningStepProgressBar } from "../components/LearningStepProgressBar";
 import { toast } from "sonner";
 import { highlightMateriContent } from "../utils/highlighter";
+import { translateError } from "../utils/errorTranslator";
 
 export default function DetailMateriGuru() {
   const navigate = useNavigate();
@@ -80,21 +81,21 @@ export default function DetailMateriGuru() {
     setSavingReflection(true);
     
     // Compile template string with UEQ parameters using a delimiter
-    const compiledTemplate = `${reflectionTemplate}|||${ueqActive ? 'true' : 'false'}|||${ueqUrl}|||${ueqDescription}`;
+    const compiledTemplate = `Singkat|||${ueqActive ? 'true' : 'false'}|||${ueqUrl}|||${ueqDescription}`;
     
     try {
       await pembelajaranAPI.update(materiId, {
         enable_reflection: enableReflection,
         reflection_template: compiledTemplate,
         pertanyaan_kendala: pertanyaanKendala,
-        pertanyaan_kesan: pertanyaanKesan
+        pertanyaan_kesan: null
       });
       await getPembelajaranByKelasId(kelasId);
       toast.success("Pengaturan refleksi berhasil disimpan!");
       setSavedReflectionSuccess(true);
       setTimeout(() => setSavedReflectionSuccess(false), 3000);
     } catch (error: any) {
-      toast.error(`Gagal menyimpan refleksi: ${error.message}`);
+      toast.error(`Gagal menyimpan refleksi: ${translateError(error.message)}`);
     } finally {
       setSavingReflection(false);
     }
@@ -153,11 +154,11 @@ export default function DetailMateriGuru() {
   const validateForPublish = () => {
     if (!pembelajaran) return { valid: false, message: "Materi tidak ditemukan" };
     if (!pembelajaran.steps || pembelajaran.steps.length < 2) {
-      return { valid: false, message: "Materi harus memiliki minimal 2 step sebelum dipublish!" };
+      return { valid: false, message: "Materi harus memiliki minimal 2 langkah sebelum diterbitkan!" };
     }
     for (const step of pembelajaran.steps) {
       if (!step.content?.bacaMateri) {
-        return { valid: false, message: `Step "${step.judul}" belum memiliki konten materi. Tambahkan konten baca materi terlebih dahulu!` };
+        return { valid: false, message: `Langkah "${step.judul}" belum memiliki konten materi. Tambahkan konten baca materi terlebih dahulu!` };
       }
     }
     return { valid: true, message: "" };
@@ -180,9 +181,9 @@ export default function DetailMateriGuru() {
       await pembelajaranAPI.update(materiId, { status: newStatus });
       await getPembelajaranByKelasId(kelasId!);
       setShowPublishModal(false);
-      toast.success(arsip ? "Materi diarsipkan (Unpublish)" : "Materi berhasil dipublish! Siswa kini bisa mengakses materi ini.");
+      toast.success(arsip ? "Materi diarsipkan (Batal Terbit)" : "Materi berhasil diterbitkan! Siswa kini bisa mengakses materi ini.");
     } catch (error: any) {
-      toast.error("Gagal mengubah status materi.");
+      toast.error("Gagal mengubah status materi: " + translateError(error.message));
     } finally {
       setPublishing(false);
     }
@@ -194,9 +195,9 @@ export default function DetailMateriGuru() {
     try {
       await pembelajaranAPI.update(materiId, { status: "draft" });
       await getPembelajaranByKelasId(kelasId!);
-      toast.success("Materi berhasil di-unpublish.");
-    } catch {
-      toast.error("Gagal mengubah status materi.");
+      toast.success("Materi berhasil dibatalkan terbitnya.");
+    } catch (error: any) {
+      toast.error("Gagal mengubah status materi: " + translateError(error.message));
     } finally {
       setPublishing(false);
     }
@@ -333,8 +334,8 @@ export default function DetailMateriGuru() {
               >
                 <Upload className="w-6 h-6 flex-shrink-0" />
                 <div className="text-left">
-                  <p className="font-bold text-base">Upload & Publish Langsung</p>
-                  <p className="text-sm text-white/80">Materi langsung terlihat oleh siswa di kelas ini. Status: <strong>Published</strong></p>
+                  <p className="font-bold text-base">Unggah & Terbitkan Langsung</p>
+                  <p className="text-sm text-white/80">Materi langsung terlihat oleh siswa di kelas ini. Status: <strong>Diterbitkan</strong></p>
                 </div>
               </button>
               <button
@@ -344,8 +345,8 @@ export default function DetailMateriGuru() {
               >
                 <Archive className="w-6 h-6 flex-shrink-0" />
                 <div className="text-left">
-                  <p className="font-bold text-base">Simpan sebagai Arsip (Draft)</p>
-                  <p className="text-sm text-white/80">Materi belum terlihat siswa. Status: <strong>Unpublish</strong></p>
+                  <p className="font-bold text-base">Simpan sebagai Arsip (Draf)</p>
+                  <p className="text-sm text-white/80">Materi belum terlihat siswa. Status: <strong>Draf</strong></p>
                 </div>
               </button>
               <button onClick={() => setShowPublishModal(false)} className="py-3 rounded-[2rem] border-2 border-[#E2E8F0] text-[#64748B] font-semibold hover:bg-[#F8FAFC] transition-all">Batal</button>
@@ -382,7 +383,7 @@ export default function DetailMateriGuru() {
                   {pembelajaran.status === "published" ? (
                     <div className="flex items-center gap-3">
                       <span className="px-3 py-1 bg-[#D1FAE5] rounded-full text-xs font-bold text-[#065F46] flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Published
+                        <CheckCircle className="w-3 h-3" /> Diterbitkan
                       </span>
                       <button
                         onClick={() => navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}/edit`)}
@@ -391,21 +392,21 @@ export default function DetailMateriGuru() {
                         Edit Materi
                       </button>
                       <button onClick={handleUnpublish} disabled={publishing} className="px-4 py-2 rounded-[2rem] bg-[#FEF3C7] text-[#92400E] text-sm font-semibold hover:bg-[#FDE68A] transition-all">
-                        Unpublish
+                        Batalkan Terbit
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-[#FEF3C7] rounded-full text-xs font-bold text-[#92400E]">Draft</span>
+                      <span className="px-3 py-1 bg-[#FEF3C7] rounded-full text-xs font-bold text-[#92400E]">Draf</span>
 
                       <button
                         onClick={handlePublishAttempt}
                         disabled={publishing || !canPublish}
                         className={`px-4 py-2 rounded-[2rem] text-sm font-semibold transition-all flex items-center gap-2 ${canPublish ? 'bg-gradient-to-r from-[#10B981] to-[#34D399] text-white' : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'}`}
-                        title={!canPublish ? "Tambahkan minimal 2 step terlebih dahulu" : ""}
+                        title={!canPublish ? "Tambahkan minimal 2 langkah terlebih dahulu" : ""}
                       >
                         <TrendingUp className="w-4 h-4" />
-                        {canPublish ? "Publish Materi" : `Butuh ${2 - stepCount} step lagi`}
+                        {canPublish ? "Terbitkan Materi" : `Butuh ${2 - stepCount} langkah lagi`}
                       </button>
                     </div>
                   )}
@@ -416,7 +417,7 @@ export default function DetailMateriGuru() {
                 <div className="mt-4 p-4 bg-[#FEF3C7] rounded-[1.5rem] flex items-center gap-3">
                   <AlertTriangle className="w-5 h-5 text-[#92400E] flex-shrink-0" />
                   <p className="text-sm text-[#92400E]">
-                    Tambahkan minimal <strong>2 step</strong> sebelum bisa publish. Saat ini: <strong>{stepCount} step</strong>.
+                    Tambahkan minimal <strong>2 langkah</strong> sebelum bisa diterbitkan. Saat ini: <strong>{stepCount} langkah</strong>.
                   </p>
                 </div>
               )}
@@ -640,8 +641,8 @@ export default function DetailMateriGuru() {
                                 >
                                   <Plus className="w-5 h-5 text-white" />
                                   <div className="flex-1 text-left">
-                                    <p className="font-semibold text-sm text-white">Edit Materi & Tambah Step</p>
-                                    <p className="text-xs text-white/80">Ubah konten atau tambah step pembelajaran baru</p>
+                                    <p className="font-semibold text-sm text-white">Edit Materi & Tambah Langkah</p>
+                                    <p className="text-xs text-white/80">Ubah konten atau tambah langkah pembelajaran baru</p>
                                   </div>
                                 </button>
                               </div>
@@ -664,8 +665,8 @@ export default function DetailMateriGuru() {
                     <Plus className="w-6 h-6 text-[#56B6C6]" strokeWidth={2.5} />
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="font-bold text-base text-[#0077B6]">Tambah Step Pembelajaran</p>
-                    <p className="text-sm text-[#64748B]">{stepCount < 2 ? `Butuh ${2 - stepCount} step lagi sebelum bisa publish` : "Tambah step baru"}</p>
+                    <p className="font-bold text-base text-[#0077B6]">Tambah Langkah Pembelajaran</p>
+                    <p className="text-sm text-[#64748B]">{stepCount < 2 ? `Butuh ${2 - stepCount} langkah lagi sebelum bisa diterbitkan` : "Tambah langkah baru"}</p>
                   </div>
                 </button>
               )}
@@ -694,21 +695,6 @@ export default function DetailMateriGuru() {
 
                   {enableReflection && (
                     <div className="flex flex-col gap-4 pt-4 border-t border-[#E2E8F0]">
-                      <div>
-                        <label className="font-semibold text-sm text-[#0077B6] mb-1 block">
-                          Pilih Template Refleksi
-                        </label>
-                        <select
-                          value={reflectionTemplate}
-                          onChange={(e) => setReflectionTemplate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E2E8F0] text-sm text-[#0077B6] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0] transition-all"
-                        >
-                          <option value="Standar">Standar (Emoji + 2 Pertanyaan)</option>
-                          <option value="Singkat">Singkat (Emoji + 1 Pertanyaan)</option>
-                          <option value="Emoji Only">Emoji Only (Hanya Emoji)</option>
-                        </select>
-                      </div>
-
                       {/* Preview Emoji */}
                       <div className="mb-2">
                         <label className="font-semibold text-sm text-[#0077B6] mb-3 block">
@@ -726,36 +712,20 @@ export default function DetailMateriGuru() {
                             </div>
                           ))}
                         </div>
-                        <p className="text-xs text-[#64748B] mt-2 italic">*Bagian ini akan otomatis muncul dan tidak dapat diubah teksnya</p>
+                        <p className="text-xs text-[#64748B] mt-2 italic">*Siswa yang memilih "Kurang Paham" akan otomatis ditanya tentang kendala belajar.</p>
                       </div>
 
-                      {reflectionTemplate !== "Emoji Only" && (
-                        <div>
-                          <label className="font-semibold text-sm text-[#0077B6] mb-1 block">
-                            Pertanyaan 1 (Kendala)
-                          </label>
-                          <input
-                            type="text"
-                            value={pertanyaanKendala}
-                            onChange={(e) => setPertanyaanKendala(e.target.value)}
-                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E2E8F0] text-sm text-[#0077B6] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0]"
-                          />
-                        </div>
-                      )}
-
-                      {reflectionTemplate === "Standar" && (
-                        <div>
-                          <label className="font-semibold text-sm text-[#0077B6] mb-1 block">
-                            Pertanyaan 2 (Kesan/Pendapat)
-                          </label>
-                          <input
-                            type="text"
-                            value={pertanyaanKesan}
-                            onChange={(e) => setPertanyaanKesan(e.target.value)}
-                            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E2E8F0] text-sm text-[#0077B6] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0]"
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <label className="font-semibold text-sm text-[#0077B6] mb-1 block">
+                          Pertanyaan Kendala Belajar
+                        </label>
+                        <input
+                          type="text"
+                          value={pertanyaanKendala}
+                          onChange={(e) => setPertanyaanKendala(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E2E8F0] text-sm text-[#0077B6] focus:outline-none focus:ring-2 focus:ring-[#D4ECF0]"
+                        />
+                      </div>
 
                       {/* ── SEKSI EVALUASI UEQ (GOOGLE FORM) ── */}
                       <div className="mt-4 pt-4 border-t-2 border-dashed border-[#E2E8F0] flex flex-col gap-4">
@@ -890,7 +860,7 @@ export default function DetailMateriGuru() {
                         </div>
                         <div className="pl-0 sm:pl-14 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                           <div className="flex-1 w-full">
-                            <p className="text-[11px] text-[#64748B] mb-1">Percobaan per step — hover segmen untuk detail</p>
+                            <p className="text-[11px] text-[#64748B] mb-1">Percobaan per langkah — hover segmen untuk detail</p>
                             <LearningStepProgressBar segments={segments} />
                           </div>
                           <button
@@ -927,7 +897,7 @@ export default function DetailMateriGuru() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg text-[#0077B6]">{selectedStep.judul || selectedStep.title}</h3>
-                  <p className="text-sm text-[#64748B]">Step {pembelajaran.steps?.findIndex((s: any) => s.id === selectedStep.id) + 1}</p>
+                  <p className="text-sm text-[#64748B]">Langkah {pembelajaran.steps?.findIndex((s: any) => s.id === selectedStep.id) + 1}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -984,7 +954,7 @@ export default function DetailMateriGuru() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg text-[#0077B6]">Quiz: {selectedStep.judul || selectedStep.title}</h3>
-                  <p className="text-sm text-[#64748B]">Step {pembelajaran.steps?.findIndex((s: any) => s.id === selectedStep.id) + 1}</p>
+                  <p className="text-sm text-[#64748B]">Langkah {pembelajaran.steps?.findIndex((s: any) => s.id === selectedStep.id) + 1}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

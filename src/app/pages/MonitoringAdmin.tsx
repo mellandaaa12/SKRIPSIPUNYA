@@ -114,22 +114,8 @@ export default function MonitoringAdmin() {
       const projectsByTeacher: Record<string, number> = response.projectsByTeacher || {};
       const recentTeacherActivities = response.recentTeacherActivities || [];
 
-      // Build recentActivities dari users nyata
-      const recentActivities = users
-        .filter((u: any) => u.role !== 'admin')
-        .map((u: any) => ({
-          id: u.id,
-          type: u.role === 'guru' ? 'teacher' : 'student' as 'student' | 'teacher',
-          name: u.name,
-          email: u.email,
-          role: u.role === 'guru' ? 'Guru' : 'Siswa',
-          status: u.isOnline ? 'Active' : 'Offline',
-          lastLogin: u.created_at || new Date().toISOString(),
-          className:
-            u.role === 'siswa'
-              ? (classLabelById[u.class_id] ?? u.className ?? u.class_name ?? null)
-              : (teacherClassNames[u.id] ?? u.className ?? u.class_name ?? null),
-        }));
+      // Get recentActivities directly from dynamically populated and sorted API response
+      const recentActivities = response.recentActivities || [];
 
       // Build classOverview dari classes nyata
       const classOverview = classes.map((c: any) => ({
@@ -192,6 +178,7 @@ export default function MonitoringAdmin() {
           const completed = allProgressRows.filter((r) => r.user_id === u.id && r.completed).length;
           const total = Math.max(1, segments.length);
           const needsAttention = segments.some((s) => s.needsAttention);
+
           return {
             id: u.id || String(idx),
             studentName: u.name,
@@ -201,7 +188,16 @@ export default function MonitoringAdmin() {
             projectProgress: total > 0 ? Math.round((completed / total) * 100) : 0,
             assignmentsCompleted: completed,
             assignmentsTotal: total,
-            lastActivity: u.updated_at || u.created_at || new Date().toISOString(),
+            lastActivity: (() => {
+              const studentProgressRows = allProgressRows.filter((r) => r.user_id === u.id);
+              if (studentProgressRows.length > 0) {
+                const latestTime = Math.max(
+                  ...studentProgressRows.map((r) => new Date(r.updated_at || r.created_at).getTime())
+                );
+                return new Date(latestTime).toISOString();
+              }
+              return u.updated_at || u.created_at || new Date().toISOString();
+            })(),
             status: (needsAttention ? "behind" : "active") as "active" | "behind",
             stepSegments: segments,
           };
@@ -258,9 +254,6 @@ export default function MonitoringAdmin() {
         void fetchMonitoringData();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pembelajaran" }, () => {
-        void fetchMonitoringData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => {
         void fetchMonitoringData();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "progress" }, () => {
@@ -392,7 +385,7 @@ export default function MonitoringAdmin() {
     { id: "kelas", label: "Kelola Kelas", icon: BookOpen, path: "/dashboard-admin/kelola-kelas" },
     { id: "guru", label: "Kelola Guru", icon: GraduationCap, path: "/dashboard-admin/kelola-guru" },
     { id: "siswa", label: "Kelola Siswa", icon: Users, path: "/dashboard-admin/kelola-siswa" },
-    { id: "monitoring", label: "Monitoring", icon: Activity, path: "/dashboard-admin/monitoring" },
+    { id: "monitoring", label: "Monitor", icon: Activity, path: "/dashboard-admin/monitoring" },
   ];
 
   const getStatusColor = (status: string) => {
@@ -495,7 +488,7 @@ export default function MonitoringAdmin() {
         </div>
         {student.stepSegments && student.stepSegments.length > 0 ? (
           <div className="mt-3 w-full overflow-visible">
-            <p className="text-[10px] text-[#94A3B8] mb-1">Step pembelajaran (hover = percobaan &amp; status)</p>
+            <p className="text-[10px] text-[#94A3B8] mb-1">Langkah pembelajaran (hover = percobaan &amp; status)</p>
             <LearningStepProgressBar segments={student.stepSegments} />
           </div>
         ) : null}

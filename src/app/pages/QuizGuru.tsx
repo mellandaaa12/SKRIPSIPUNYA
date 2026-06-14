@@ -9,6 +9,7 @@ import { useSettings } from "../context/SettingsContext";
 import { usePembelajaran } from "../context/PembelajaranContext";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
+import { translateError } from "../utils/errorTranslator";
 
 interface Soal {
   id: string;
@@ -96,12 +97,12 @@ export default function QuizGuru() {
 
   const handleSimpan = async () => {
     if (!materiId || !stepId) {
-      toast.error("ID materi atau step tidak ditemukan!");
+      toast.error("ID materi atau langkah tidak ditemukan!");
       return;
     }
 
     if (aktifkanQuiz && soalList.length === 0) {
-      toast.error("Tambahkan minimal 1 soal untuk mengaktifkan quiz!");
+      toast.error("Tambahkan minimal 1 soal untuk mengaktifkan kuis!");
       return;
     }
 
@@ -115,13 +116,12 @@ export default function QuizGuru() {
         },
       });
       
-      toast.success("Quiz berhasil disimpan!");
+      toast.success("Kuis berhasil disimpan!");
       
       navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save quiz:", error);
-      const errorMessage = error instanceof Error ? error.message : "Silakan coba lagi.";
-      toast.error(`Gagal menyimpan quiz: ${errorMessage}`);
+      toast.error(translateError(error?.message || error) || "Gagal menyimpan kuis. Silakan coba lagi.");
       setSaving(false);
     }
   };
@@ -129,7 +129,7 @@ export default function QuizGuru() {
   if (!step) {
     return (
       <div className="min-h-screen w-full relative flex items-center justify-center" style={{ background: "transparent", backgroundAttachment: "fixed" }}>
-        <p className="font-['Poppins'] text-[18px] text-[#64748b]">Step tidak ditemukan</p>
+        <p className="font-['Poppins'] text-[18px] text-[#64748b]">Langkah tidak ditemukan</p>
       </div>
     );
   }
@@ -188,11 +188,11 @@ export default function QuizGuru() {
 
           {/* Welcome Section */}
           <div className="mb-8 animate-slideIn">
-            <div className="bg-white/85 backdrop-blur-20 border border-white/95 rounded-[2.5rem] p-10 shadow-[0_8px_32px_-4px_rgba(86,182,198,0.1)]">
+            <div className="bg-white/85 backdrop-blur-20 border border-white/95 rounded-[2.5rem] p-10 shadow-[0_8px_32px_-4px_rgba(0,119,182,0.1)]">
               <div className="flex items-center gap-3 mb-3">
                 <Sparkles className="h-6 w-6 text-[#56B6C6]" />
                 <h1 className="text-3xl font-bold text-[#56B6C6]">
-                  Buat Quiz
+                  Buat Kuis
                 </h1>
               </div>
               <p className="text-base text-[#64748B]">
@@ -213,10 +213,10 @@ export default function QuizGuru() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-base text-[#0077B6]">
-                        Quiz
+                        Kuis
                       </h3>
                       <p className="text-sm text-[#64748B]">
-                        Tambahkan quiz untuk menguji pemahaman siswa
+                        Tambahkan kuis untuk menguji pemahaman siswa
                       </p>
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export default function QuizGuru() {
                           className="w-24 h-12 px-4 py-3 border-2 border-[#10B981] rounded-[2rem] text-sm text-[#065F46] focus:border-[#059669] focus:outline-none transition-colors"
                         />
                         <p className="text-sm text-[#065F46]">
-                          Siswa harus mendapat nilai minimal {nilaiMinimal} untuk lanjut ke step berikutnya
+                          Siswa harus mendapat nilai minimal {nilaiMinimal} untuk lanjut ke langkah berikutnya
                         </p>
                       </div>
                     </div>
@@ -316,7 +316,7 @@ export default function QuizGuru() {
                     >
                       <Plus className="w-5 h-5 text-[#10B981]" />
                       <p className="font-semibold text-sm text-[#10B981]">
-                        Tambah Soal Quiz
+                        Tambah Soal Kuis
                       </p>
                     </button>
                   </div>
@@ -337,7 +337,7 @@ export default function QuizGuru() {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Simpan Quiz</span>
+                    <span className="text-sm font-semibold">Simpan Kuis</span>
                   </>
                 )}
               </button>
@@ -351,7 +351,7 @@ export default function QuizGuru() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-[2.5rem] w-[650px] max-h-[90vh] overflow-y-auto p-8">
             <h3 className="font-semibold text-2xl text-[#0077B6] mb-6">
-              Tambah Soal Quiz
+              Tambah Soal Kuis
             </h3>
 
             {/* Pilihan Tipe Soal */}

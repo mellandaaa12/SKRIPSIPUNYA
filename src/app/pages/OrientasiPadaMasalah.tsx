@@ -90,7 +90,7 @@ export default function OrientasiPadaMasalah() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="font-['Poppins'] font-bold text-[24px] text-white">10%</span>
-            <span className="font-['Poppins'] text-[10px] text-white">Complete</span>
+            <span className="font-['Poppins'] text-[10px] text-white">Selesai</span>
           </div>
         </div>
 

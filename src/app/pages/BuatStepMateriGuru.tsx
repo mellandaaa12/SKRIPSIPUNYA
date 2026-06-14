@@ -9,6 +9,7 @@ import { useSettings } from "../context/SettingsContext";
 import { usePembelajaran } from "../context/PembelajaranContext";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
+import { translateError } from "../utils/errorTranslator";
 
 export default function BuatStepMateriGuru() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function BuatStepMateriGuru() {
 
   const handleSimpan = async () => {
     if (!judulStep || !deskripsiStep) {
-      toast.error("Judul dan deskripsi step harus diisi!");
+      toast.error("Judul dan deskripsi langkah harus diisi!");
       return;
     }
 
@@ -40,12 +41,12 @@ export default function BuatStepMateriGuru() {
         status: "draft",
       });
       
-      toast.success("Step berhasil ditambahkan!");
+      toast.success("Langkah berhasil ditambahkan!");
       
       navigate(`/dashboard-guru/kelas/${kelasId}/materi/${materiId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add step:", error);
-      toast.error("Gagal menambahkan step. Silakan coba lagi.");
+      toast.error(translateError(error?.message || error) || "Gagal menambahkan langkah. Silakan coba lagi.");
       setSaving(false);
     }
   };
@@ -108,11 +109,11 @@ export default function BuatStepMateriGuru() {
               <div className="flex items-center gap-3 mb-3">
                 <Sparkles className="h-6 w-6 text-[#56B6C6]" />
                 <h1 className="text-3xl font-bold text-[#56B6C6]">
-                  Tambah Step Pembelajaran
+                  Tambah Langkah Pembelajaran
                 </h1>
               </div>
               <p className="text-base text-[#64748B]">
-                Buat step pembelajaran baru untuk materi ini
+                Buat langkah pembelajaran baru untuk materi ini
               </p>
             </div>
           </div>
@@ -120,10 +121,10 @@ export default function BuatStepMateriGuru() {
           {/* Form Card */}
           <div className="bg-white/85 backdrop-blur-16 border border-white/95 rounded-[2.5rem] p-8 shadow-[0_8px_32px_-4px_rgba(86,182,198,0.1)] animate-scaleIn">
             <div className="flex flex-col gap-6">
-              {/* Judul Step */}
+              {/* Judul Langkah */}
               <div className="flex flex-col gap-2">
                 <label className="font-semibold text-sm text-[#0077B6]">
-                  Judul Step <span className="text-[#EF4444]">*</span>
+                  Judul Langkah <span className="text-[#EF4444]">*</span>
                 </label>
                 <p className="text-sm text-[#64748B]">
                   Contoh: FORMAT HALAMAN WEB, TEKS DAN FORMATTING, TABEL, dll.
@@ -137,13 +138,13 @@ export default function BuatStepMateriGuru() {
                 />
               </div>
 
-              {/* Deskripsi Step */}
+              {/* Deskripsi Langkah */}
               <div className="flex flex-col gap-2">
                 <label className="font-semibold text-sm text-[#0077B6]">
-                  Deskripsi Step <span className="text-[#EF4444]">*</span>
+                  Deskripsi Langkah <span className="text-[#EF4444]">*</span>
                 </label>
                 <p className="text-sm text-[#64748B]">
-                  Jelaskan secara singkat apa yang akan dipelajari di step ini
+                  Jelaskan secara singkat apa yang akan dipelajari di langkah ini
                 </p>
                 <textarea
                   value={deskripsiStep}
@@ -157,7 +158,7 @@ export default function BuatStepMateriGuru() {
               {/* Info Box */}
               <div className="bg-[#DBEAFE] border-2 border-[#56B6C6] rounded-[2rem] p-6">
                 <p className="text-sm text-[#1E40AF] leading-relaxed">
-                  💡 <strong>Tips:</strong> Setelah membuat step ini, Anda bisa menambahkan konten "Baca Materi" dan "Kerjakan Latihan" dengan mengklik step yang sudah dibuat.
+                  💡 <strong>Tips:</strong> Setelah membuat langkah ini, Anda bisa menambahkan konten "Baca Materi" dan "Kerjakan Latihan" dengan mengklik langkah yang sudah dibuat.
                 </p>
               </div>
 
@@ -175,7 +176,7 @@ export default function BuatStepMateriGuru() {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Simpan Step</span>
+                    <span className="text-sm font-semibold">Simpan Langkah</span>
                   </>
                 )}
               </button>

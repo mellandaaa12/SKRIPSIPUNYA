@@ -326,7 +326,7 @@ export default function BacaMateri() {
                   }`}
                 >
                   <Code className="w-4 h-4" />
-                  {saving ? "Menyiapkan..." : "Lanjut ke Code Editor"}
+                  {saving ? "Menyiapkan..." : "Lanjut ke Editor Kode"}
                 </button>
               )}
               {(step.content?.quiz?.aktif || step.content?.quiz?.soalList?.length > 0) && (
@@ -340,7 +340,7 @@ export default function BacaMateri() {
                   }`}
                 >
                   <FileText className="w-4 h-4" />
-                  {saving ? "Menyiapkan..." : "Lanjut ke Quiz"}
+                  {saving ? "Menyiapkan..." : "Lanjut ke Kuis"}
                 </button>
               )}
             </div>
@@ -371,7 +371,7 @@ export default function BacaMateri() {
                     ) : hasScrolledToBottom ? (
                       "Tandai Sudah Dibaca"
                     ) : (
-                      "Scroll ke bawah untuk melanjutkan"
+                      "Gulir ke bawah untuk melanjutkan"
                     )}
                   </button>
                 )}

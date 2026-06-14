@@ -284,7 +284,7 @@ export default function KelolaSiswa() {
     { id: "kelas", label: "Kelola Kelas", icon: BookOpen, path: "/dashboard-admin/kelola-kelas" },
     { id: "guru", label: "Kelola Guru", icon: GraduationCap, path: "/dashboard-admin/kelola-guru" },
     { id: "siswa", label: "Kelola Siswa", icon: Users, path: "/dashboard-admin/kelola-siswa" },
-    { id: "monitoring", label: "Monitoring", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
+    { id: "monitoring", label: "Monitor", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
   ];
 
   return (

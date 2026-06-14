@@ -18,25 +18,30 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies untuk materi-images bucket
 -- Allow authenticated users to upload
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload materi images"
+DROP POLICY IF EXISTS "Authenticated users can upload materi images" ON storage.objects;
+CREATE POLICY "Authenticated users can upload materi images"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'materi-images');
 
 -- Allow public read
-CREATE POLICY IF NOT EXISTS "Public can view materi images"
+DROP POLICY IF EXISTS "Public can view materi images" ON storage.objects;
+CREATE POLICY "Public can view materi images"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'materi-images');
 
 -- Allow authenticated users to update their own uploads
-CREATE POLICY IF NOT EXISTS "Authenticated users can update materi images"
+DROP POLICY IF EXISTS "Authenticated users can update materi images" ON storage.objects;
+CREATE POLICY "Authenticated users can update materi images"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (bucket_id = 'materi-images');
 
 -- Allow authenticated users to delete
-CREATE POLICY IF NOT EXISTS "Authenticated users can delete materi images"
+DROP POLICY IF EXISTS "Authenticated users can delete materi images" ON storage.objects;
+CREATE POLICY "Authenticated users can delete materi images"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (bucket_id = 'materi-images');
+

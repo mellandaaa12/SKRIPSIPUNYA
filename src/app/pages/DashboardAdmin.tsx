@@ -53,6 +53,7 @@ interface RecentActivity {
   status: "Aktif" | "Pending" | "Offline";
   isOnline?: boolean;
   timestamp?: string;
+  email?: string;
 }
 
 interface StatCardProps {
@@ -81,7 +82,7 @@ export default function DashboardAdmin() {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activityTab, setActivityTab] = useState<"activities" | "online">("activities");
+  const [activityTab, setActivityTab] = useState<"aktivitas" | "online" | "semua">("aktivitas");
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(
     user?.avatar || null
@@ -157,87 +158,35 @@ export default function DashboardAdmin() {
 
       console.log("📊 Final Stats:", { siswaCount, guruCount, attentionCount, kelasCount });
 
-      const newActivities: RecentActivity[] = [];
-      const now = new Date().getTime();
-
-      const checkOnline = (updatedAt: string | undefined | null) => {
-        if (!updatedAt) return false;
-        const lastUpdate = new Date(updatedAt).getTime();
-        return (now - lastUpdate) < 60000;
-      };
-
-      const getTimeAgo = (dateString: string | undefined | null) => {
-        if (!dateString) return "Baru saja";
-        const date = new Date(dateString).getTime();
-        const diffInSeconds = Math.floor((now - date) / 1000);
+      const newActivities = (monitorRes.recentActivities || []).map((act: any) => {
+        const isGuru = act.role === 'Guru';
         
-        if (diffInSeconds < 60) return "Baru saja";
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit lalu`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam lalu`;
-        return `${Math.floor(diffInSeconds / 86400)} hari lalu`;
-      };
+        let activityDescription = "";
+        if (isGuru) {
+          activityDescription = act.className && act.className !== "Belum ada kelas"
+            ? `Mengajar kelas ${act.className}`
+            : "Guru belum mengajar kelas";
+        } else {
+          activityDescription = act.className
+            ? `Siswa kelas ${act.className}`
+            : "Siswa belum bergabung kelas";
+        }
 
-      guruRes.users?.slice(0, 2).forEach((guru: any) => {
-        const timestamp = guru.updated_at || guru.updatedAt || guru.created_at || guru.createdAt;
-        const online = checkOnline(timestamp);
-        newActivities.push({
-          id: `guru-${guru.id}`,
-          type: "user",
-          title: `Guru: ${guru.name}`,
-          description: "Guru terdaftar dalam sistem",
-          time: "", // calculated in render
-          timestamp: timestamp,
-          color: "from-blue-400 to-blue-600",
-          avatarColor: "bg-gradient-to-br from-[#0077B6] to-[#00B4D8]",
-          status: online ? "Aktif" : "Offline",
-          isOnline: online,
-        });
-      });
-
-      siswaRes.users?.slice(0, 3).forEach((siswa: any) => {
-        const timestamp = siswa.updated_at || siswa.updatedAt || siswa.created_at || siswa.createdAt;
-        const online = checkOnline(timestamp);
-        newActivities.push({
-          id: `siswa-${siswa.id}`,
-          type: "user",
-          title: `Siswa: ${siswa.name}`,
-          description: "Siswa terdaftar dalam sistem",
-          time: "", // calculated in render
-          timestamp: timestamp,
-          color: "from-blue-400 to-blue-600",
-          avatarColor: "bg-gradient-to-br from-[#0077B6] to-[#0077B6]",
-          status: online ? "Aktif" : "Offline",
-          isOnline: online,
-        });
-      });
-
-      kelasRes.kelas?.slice(0, 2).forEach((kelas: any) => {
-        const timestamp = kelas.updated_at || kelas.updatedAt || kelas.created_at || kelas.createdAt;
-        newActivities.push({
-          id: `kelas-${kelas.id}`,
-          type: "project",
-          title: `Kelas: ${kelas.name}`,
-          description: kelas.subject || "Kelas tersedia",
-          time: "", // calculated in render
-          timestamp: timestamp,
-          color: "from-blue-400 to-blue-600",
-          avatarColor: "bg-gradient-to-br from-[#90E0EF] to-[#00B4D8]",
-          status: "Pending",
-          isOnline: false,
-        });
-      });
-
-      // Sort activities based on the most recent first
-      newActivities.sort((a, b) => {
-        const getMs = (timeStr: string) => {
-          if (timeStr === "Baru saja") return 0;
-          const val = parseInt(timeStr);
-          if (timeStr.includes("menit")) return val * 60;
-          if (timeStr.includes("jam")) return val * 3600;
-          if (timeStr.includes("hari")) return val * 86400;
-          return 999999;
+        return {
+          id: act.id,
+          type: "user" as const,
+          title: `${act.role}: ${act.name}`,
+          description: activityDescription,
+          time: "",
+          timestamp: act.lastLogin,
+          color: isGuru ? "from-emerald-400 to-emerald-600" : "from-violet-400 to-violet-600",
+          avatarColor: isGuru
+            ? "bg-gradient-to-br from-[#0077B6] to-[#00B4D8]"
+            : "bg-gradient-to-br from-[#0077B6] to-[#0077B6]",
+          status: act.status === 'Active' ? 'Aktif' : 'Offline' as any,
+          isOnline: act.status === 'Active',
+          email: act.email || "",
         };
-        return getMs(a.time) - getMs(b.time);
       });
 
       setActivities(newActivities);
@@ -283,14 +232,6 @@ export default function DashboardAdmin() {
           void fetchStats();
         }
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "projects" },
-        () => {
-          console.log("🔄 Realtime: Projects changed, updating stats...");
-          void fetchStats();
-        }
-      )
       .subscribe();
 
     return () => {
@@ -312,7 +253,7 @@ export default function DashboardAdmin() {
     { id: "kelas", label: "Kelola Kelas", icon: BookOpen, path: "/dashboard-admin/kelola-kelas" },
     { id: "guru", label: "Kelola Guru", icon: GraduationCap, path: "/dashboard-admin/kelola-guru" },
     { id: "siswa", label: "Kelola Siswa", icon: Users, path: "/dashboard-admin/kelola-siswa" },
-    { id: "monitoring", label: "Monitoring", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
+    { id: "monitoring", label: "Monitor", icon: ActivityIcon, path: "/dashboard-admin/monitoring" },
   ];
 
   const statusStyles = {
@@ -631,7 +572,7 @@ export default function DashboardAdmin() {
                     {tabs.map((tab) => (
                       <button
                         key={tab.id}
-                        onClick={() => setActivityTab(tab.id as "activities" | "online")}
+                        onClick={() => setActivityTab(tab.id)}
                         className={cn(
                           "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                           activityTab === tab.id
@@ -667,19 +608,34 @@ export default function DashboardAdmin() {
                     <div className="flex justify-center py-16">
                       <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#0077B6]" />
                     </div>
-                  ) : activityTab === "online" ? (
-                    <p className="py-12 text-center text-sm text-[#94A3B8]">
-                      {preferences.language === "id" ? "Tidak ada data online." : "No online data."}
-                    </p>
-                    ) : activities.length === 0 ? (
-                      <div className="flex flex-col items-center py-14">
-                        <ActivityIcon className="mb-3 h-12 w-12 text-[#CBD5E1]" />
-                        <p className="text-sm text-[#94A3B8]">
-                          {preferences.language === "id" ? "Belum ada aktivitas" : "No activity yet"}
-                        </p>
-                      </div>
-                    ) : (
-                      activities.slice(0, 8).map((activity) => {
+                  ) : (
+                    (() => {
+                      const filteredList = activities.filter(a => {
+                        const nameMatches = !searchName.trim() || a.title.toLowerCase().includes(searchName.toLowerCase());
+                        const emailMatches = !searchEmail.trim() || (a.email && a.email.toLowerCase().includes(searchEmail.toLowerCase()));
+                        return nameMatches && emailMatches;
+                      });
+
+                      const list = activityTab === "online" 
+                        ? filteredList.filter(a => a.isOnline)
+                        : activityTab === "semua"
+                          ? filteredList
+                          : filteredList.slice(0, 8); // tab "aktivitas" / default
+
+                      if (list.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center py-14">
+                            <ActivityIcon className="mb-3 h-12 w-12 text-[#CBD5E1]" />
+                            <p className="text-sm text-[#94A3B8]">
+                              {activityTab === "online"
+                                ? preferences.language === "id" ? "Tidak ada data online" : "No online data"
+                                : preferences.language === "id" ? "Belum ada aktivitas" : "No activity yet"}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      return list.map((activity) => {
                         const now = new Date().getTime();
                         const activityTime = activity.timestamp ? new Date(activity.timestamp).getTime() : now;
                         const diffInSeconds = Math.floor((now - activityTime) / 1000);
@@ -701,54 +657,55 @@ export default function DashboardAdmin() {
                             ? "Kelas"
                             : "Class";
 
-                      return (
-                        <div
-                          key={activity.id}
-                          className="px-5 py-4 grid grid-cols-12 gap-4 items-center border-b border-[#E2E8F0]/30 hover:bg-[#F8FAFC]/50 transition-all duration-200 group"
-                        >
-                          {/* Entity */}
-                          <div className="col-span-4 flex items-center gap-3">
-                            <div className="relative">
-                              <div className={`h-10 w-10 rounded-full ring-2 ring-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] ${activity.avatarColor} flex items-center justify-center text-white text-sm font-semibold`}>
-                                {activity.title.split(': ')[1]?.charAt(0) || 'U'}
+                        return (
+                          <div
+                            key={activity.id}
+                            className="px-5 py-4 grid grid-cols-12 gap-4 items-center border-b border-[#E2E8F0]/30 hover:bg-[#F8FAFC]/50 transition-all duration-200 group"
+                          >
+                            {/* Entity */}
+                            <div className="col-span-4 flex items-center gap-3">
+                              <div className="relative">
+                                <div className={`h-10 w-10 rounded-full ring-2 ring-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] ${activity.avatarColor} flex items-center justify-center text-white text-sm font-semibold`}>
+                                  {activity.title.split(': ')[1]?.charAt(0) || 'U'}
+                                </div>
+                                {activity.isOnline ? (
+                                  <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#4ADE80] ring-2 ring-white" title="Online" />
+                                ) : (
+                                  <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#94A3B8] ring-2 ring-white" title="Offline" />
+                                )}
                               </div>
-                              {activity.isOnline ? (
-                                <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#4ADE80] ring-2 ring-white" title="Online" />
-                              ) : (
-                                <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#94A3B8] ring-2 ring-white" title="Offline" />
-                              )}
+                              <span className="font-medium text-[#0077B6] text-sm">{activity.title}</span>
                             </div>
-                            <span className="font-medium text-[#0077B6] text-sm">{activity.title}</span>
-                          </div>
 
-                          {/* Detail */}
-                          <div className="col-span-4">
-                            <span className="text-sm text-[#64748B]">{activity.description}</span>
-                          </div>
-
-                          {/* Status */}
-                          <div className="col-span-2">
-                            <span className={cn(
-                              "inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold",
-                              statusStyles[activity.status]
-                            )}>
-                              {roleLabel}
-                            </span>
-                          </div>
-
-                          {/* Time & Actions */}
-                          <div className="col-span-2 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-sm text-[#94A3B8]">
-                              <Clock className="h-3.5 w-3.5" />
-                              <span>{timeAgo}</span>
+                            {/* Detail */}
+                            <div className="col-span-4">
+                              <span className="text-sm text-[#64748B]">{activity.description}</span>
                             </div>
-                            <button className="opacity-0 group-hover:opacity-100 flex h-8 w-8 items-center justify-center rounded-lg text-[#94A3B8] hover:bg-blue-50 hover:text-[#0077B6] transition-all duration-200">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
+
+                            {/* Status */}
+                            <div className="col-span-2">
+                              <span className={cn(
+                                "inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold",
+                                statusStyles[activity.status]
+                              )}>
+                                {roleLabel}
+                              </span>
+                            </div>
+
+                            {/* Time & Actions */}
+                            <div className="col-span-2 flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-sm text-[#94A3B8]">
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>{timeAgo}</span>
+                              </div>
+                              <button className="opacity-0 group-hover:opacity-100 flex h-8 w-8 items-center justify-center rounded-lg text-[#94A3B8] hover:bg-blue-50 hover:text-[#0077B6] transition-all duration-200">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })
+                        );
+                      });
+                    })()
                   )}
                 </div>
               </div>

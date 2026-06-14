@@ -180,6 +180,22 @@ export default function MengerjakanLatihan() {
     }
   };
 
+  const handleBlankClick = (blankIdx: number) => {
+    if (feedback !== null) return;
+    const optionToRemove = filledBlanks[blankIdx];
+    if (!optionToRemove) return;
+
+    const newFilled = [...filledBlanks];
+    newFilled[blankIdx] = '';
+    setFilledBlanks(newFilled);
+
+    const currentQ = questions[currentQIdx];
+    const optionIdx = currentQ.options.indexOf(optionToRemove);
+    if (optionIdx !== -1) {
+      setSelectedOptionIndices(prev => prev.filter(idx => idx !== optionIdx));
+    }
+  };
+
   const handleCheckAnswer = () => {
     const currentQ = questions[currentQIdx];
     
@@ -350,7 +366,7 @@ export default function MengerjakanLatihan() {
         <main className="ml-0 lg:ml-80 min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-[#94A3B8] mx-auto mb-4" />
-            <p className="text-[#64748B]">Quiz tidak tersedia untuk step ini.</p>
+            <p className="text-[#64748B]">Kuis tidak tersedia untuk langkah ini.</p>
             <button onClick={() => navigate(`/pembelajaran/${pembelajaranId}`)} className="mt-4 text-[#0077B6] font-semibold">Kembali</button>
           </div>
         </main>
@@ -561,7 +577,7 @@ export default function MengerjakanLatihan() {
                                let blankCounter = 0;
                                return (
                                  <p className="text-xs text-[#94A3B8] font-semibold flex flex-wrap items-center gap-x-2 gap-y-1.5 leading-relaxed m-0">
-                                   {parts.map((part, i) => {
+                                   {parts.map((part: string, i: number) => {
                                      const isBlank = part.match(/\.{3,}|_{3,}/);
                                      if (isBlank) {
                                        const currentBlankIdx = blankCounter;

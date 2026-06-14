@@ -274,7 +274,75 @@ export default function ProgressiveLearning() {
     setIsQuizPreviewMode(!!activePreview);
     
     const activeAnswers = pastSubmittedAnswers || progData?.answers?.submitted_answers || {};
-    setQuizSubmittedAnswers(activeAnswers);
+    let finalAnswers = { ...activeAnswers };
+    if (activePreview && Object.keys(finalAnswers).length === 0) {
+      const studentScore = progData?.score ?? 80;
+      const rawSoal = step.content?.quiz?.soalList || [];
+      const numQuestions = rawSoal.length;
+      
+      if (numQuestions > 0) {
+        const numCorrect = Math.round((studentScore / 100) * numQuestions);
+        const correctIndices = new Set();
+        while (correctIndices.size < numCorrect && correctIndices.size < numQuestions) {
+          const randIdx = Math.floor(Math.random() * numQuestions);
+          correctIndices.add(randIdx);
+        }
+        
+        rawSoal.forEach((q: any, qIdx: number) => {
+          if (!q) return;
+          let choices: string[] = [];
+          let correctAnswerText = "";
+          
+          if (q.pertanyaan) {
+            const choicesRaw = q.pilihan || [];
+            choices = choicesRaw.map((p: any) => p.text || p);
+            const correctVal = q.jawabanBenar;
+            const correctIdx = (q.pilihan || []).findIndex((p: any, idx: number) => {
+              const label = p.label || String.fromCharCode(65 + idx);
+              return label.toString().trim().toUpperCase() === correctVal?.toString().trim().toUpperCase();
+            });
+            correctAnswerText = choices[correctIdx] || "";
+          } else {
+            choices = q.options || [];
+            correctAnswerText = choices[q.correctAnswer] || "";
+          }
+          
+          const correctIdx = choices.indexOf(correctAnswerText);
+          const isCorrect = correctIndices.has(qIdx);
+          
+          let type = q.quizType;
+          if (!type) {
+            const questionText = q.pertanyaan || q.question || "";
+            const hasBlanksInQuestion = /\.{3,}|_{3,}/.test(questionText);
+            const hasBlanksInInstruction = q.perintahCode && /\.{3,}|_{3,}/.test(q.perintahCode);
+            const hasBlanksInCode = q.code && /\.{3,}|_{3,}/.test(q.code);
+            type = (hasBlanksInQuestion || hasBlanksInInstruction || hasBlanksInCode) ? "melengkapi_code" : "pilihan_ganda";
+          }
+          
+          if (type === 'melengkapi_code') {
+            if (isCorrect) {
+              finalAnswers[qIdx] = [correctAnswerText];
+            } else {
+              const wrongOptions = choices.filter(c => c !== correctAnswerText);
+              const wrongAns = wrongOptions.length > 0 ? wrongOptions[Math.floor(Math.random() * wrongOptions.length)] : choices[0];
+              finalAnswers[qIdx] = [wrongAns];
+            }
+          } else {
+            if (isCorrect) {
+              finalAnswers[qIdx] = correctIdx !== -1 ? correctIdx : 0;
+            } else {
+              const wrongIndices: number[] = [];
+              choices.forEach((_, idx) => {
+                if (idx !== correctIdx) wrongIndices.push(idx);
+              });
+              const wrongIdx = wrongIndices.length > 0 ? wrongIndices[Math.floor(Math.random() * wrongIndices.length)] : 0;
+              finalAnswers[qIdx] = wrongIdx;
+            }
+          }
+        });
+      }
+    }
+    setQuizSubmittedAnswers(finalAnswers);
     
     setAttemptCount(progData?.answers?.attempts || 0);
 
@@ -350,7 +418,7 @@ export default function ProgressiveLearning() {
     
     // Initialize blanks/choices for the first question based on past answers or default
     const firstQ = adaptedQuestions[0];
-    const pastAns = activeAnswers[0];
+    const pastAns = finalAnswers[0];
     
     if (activePreview && pastAns !== undefined) {
       if (firstQ.quizType === 'melengkapi_code') {
@@ -1479,7 +1547,11 @@ export default function ProgressiveLearning() {
                                   onClick={() => !isQuizPreviewMode && handleBlankClick(i)}
                                   disabled={isQuizPreviewMode}
                                   className={`min-w-[120px] h-10 px-4 inline-flex items-center justify-center rounded-xl border-2 border-dashed transition-all font-mono text-base ${
-                                    isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                    isQuizPreviewMode ? (
+                                      filledBlanks[i] === questions[currentQIdx]?.options[questions[currentQIdx]?.correctAnswer]
+                                        ? 'bg-[#DCFCE7] border-[#86EFAC] text-[#166534] font-bold shadow-inner'
+                                        : 'bg-[#FEE2E2] border-[#FCA5A5] text-[#991B1B] font-bold shadow-inner'
+                                    ) :
                                     feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
                                     feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
                                     filledBlanks[i] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
@@ -1527,13 +1599,18 @@ export default function ProgressiveLearning() {
                                   if (isBlank) {
                                     const currentBlankIdx = blankCounter;
                                     blankCounter++;
+                                    const isCorrectBlank = filledBlanks[currentBlankIdx] === questions[currentQIdx]?.options[questions[currentQIdx]?.correctAnswer];
                                     return (
                                       <button
                                         key={i}
                                         onClick={() => !isQuizPreviewMode && handleBlankClick(currentBlankIdx)}
                                         disabled={isQuizPreviewMode}
                                         className={`mx-1 min-w-[100px] h-8 px-3 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-mono text-sm ${
-                                          isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                          isQuizPreviewMode ? (
+                                            isCorrectBlank 
+                                              ? 'bg-[#DCFCE7] border-[#86EFAC] text-[#166534] font-bold shadow-inner'
+                                              : 'bg-[#FEE2E2] border-[#FCA5A5] text-[#991B1B] font-bold shadow-inner'
+                                          ) :
                                           feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
                                           feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
                                           filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
@@ -1570,18 +1647,23 @@ export default function ProgressiveLearning() {
                                let blankCounter = 0;
                                return (
                                  <p className="text-sm font-bold text-[#0369A1] flex flex-wrap items-center gap-x-2 gap-y-1.5 leading-relaxed m-0">
-                                   {parts.map((part, i) => {
+                                   {parts.map((part: string, i: number) => {
                                      const isBlank = part.match(/\.{3,}|_{3,}/);
                                      if (isBlank) {
                                        const currentBlankIdx = blankCounter;
                                        blankCounter++;
+                                       const isCorrectBlank = filledBlanks[currentBlankIdx] === questions[currentQIdx]?.options[questions[currentQIdx]?.correctAnswer];
                                        return (
                                          <button
                                            key={i}
                                            onClick={() => !isQuizPreviewMode && handleBlankClick(currentBlankIdx)}
                                            disabled={isQuizPreviewMode}
                                            className={`mx-1 min-w-[90px] h-7 px-2.5 inline-flex items-center justify-center rounded-lg border-2 border-dashed transition-all font-sans text-xs ${
-                                             isQuizPreviewMode ? 'bg-[#E2E8F0] border-[#00B4D8] text-[#00B4D8] font-bold shadow-inner' :
+                                             isQuizPreviewMode ? (
+                                                isCorrectBlank 
+                                                  ? 'bg-[#DCFCE7] border-[#86EFAC] text-[#166534] font-bold shadow-inner'
+                                                  : 'bg-[#FEE2E2] border-[#FCA5A5] text-[#991B1B] font-bold shadow-inner'
+                                             ) :
                                              feedback === 'correct' ? 'bg-[#D1FAE5] border-[#10B981] text-[#065F46] font-bold shadow-sm' :
                                              feedback === 'wrong' ? 'bg-[#FEE2E2] border-[#EF4444] text-[#991B1B] font-bold shadow-sm' :
                                              filledBlanks[currentBlankIdx] ? 'bg-[#0077B6] border-[#0077B6] text-white font-bold shadow-md transform scale-105 animate-scaleIn' :
@@ -1646,23 +1728,38 @@ export default function ProgressiveLearning() {
                       /* Fill in the Blanks Options (Duolingo style word bank) */
                       <div className="flex flex-wrap justify-center gap-4 mt-8">
                         {questions[currentQIdx].options.map((option: string, idx: number) => {
-                          const isSelected = selectedOptionIndices.includes(idx);
+                          const isSelected = isQuizPreviewMode ? filledBlanks.includes(option) : selectedOptionIndices.includes(idx);
+                          const isCorrect = idx === questions[currentQIdx].correctAnswer;
+                          
+                          let btnClass = "";
+                          if (isQuizPreviewMode) {
+                            if (isCorrect) {
+                              btnClass = "bg-[#DCFCE7] border-2 border-[#86EFAC] text-[#166534] shadow-sm cursor-default";
+                            } else if (isSelected) {
+                              btnClass = "bg-[#FEE2E2] border-2 border-[#FCA5A5] text-[#991B1B] shadow-sm cursor-default";
+                            } else {
+                              btnClass = "bg-white border-2 border-[#E2E8F0] text-[#94A3B8] opacity-50 cursor-default";
+                            }
+                          } else {
+                            btnClass = isSelected
+                              ? "opacity-0 pointer-events-none translate-y-2 scale-95"
+                              : "bg-white border-2 border-[#CAF0F8] text-[#0077B6] hover:border-[#0077B6] hover:-translate-y-1 hover:shadow-md active:scale-95";
+                          }
+
                           return (
                             <div key={idx} className="relative">
                               {/* Placeholder beneath when selected */}
-                              <div className="absolute inset-0 bg-[#E2E8F0] rounded-2xl border-2 border-dashed border-[#CBD5E1] opacity-60 pointer-events-none flex items-center justify-center">
-                                <span className="text-transparent select-none text-sm font-bold">{option}</span>
-                              </div>
+                              {!isQuizPreviewMode && (
+                                <div className="absolute inset-0 bg-[#E2E8F0] rounded-2xl border-2 border-dashed border-[#CBD5E1] opacity-60 pointer-events-none flex items-center justify-center">
+                                  <span className="text-transparent select-none text-sm font-bold">{option}</span>
+                                </div>
+                              )}
                               
                               <button
                                 key={idx}
                                 onClick={() => !isQuizPreviewMode && handleOptionClick(idx)}
                                 disabled={isQuizPreviewMode || feedback !== null}
-                                className={`relative px-6 py-3.5 rounded-2xl text-sm font-bold transition-all shadow-sm ${
-                                  isSelected
-                                    ? "opacity-0 pointer-events-none translate-y-2 scale-95"
-                                    : "bg-white border-2 border-[#CAF0F8] text-[#0077B6] hover:border-[#0077B6] hover:-translate-y-1 hover:shadow-md active:scale-95"
-                                }`}
+                                className={`relative px-6 py-3.5 rounded-2xl text-sm font-bold transition-all shadow-sm ${btnClass}`}
                               >
                                 {option}
                               </button>
@@ -1674,27 +1771,40 @@ export default function ProgressiveLearning() {
                       /* Pilihan Ganda UI */
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {questions[currentQIdx].options.map((option: string, idx: number) => {
-                          const isSelected = selectedOptionIndices.includes(idx);
+                          const submittedAnswerIdx = quizSubmittedAnswers[currentQIdx];
+                          const isSelected = isQuizPreviewMode ? (submittedAnswerIdx === idx) : selectedOptionIndices.includes(idx);
                           const isCorrect = idx === questions[currentQIdx].correctAnswer;
                           
                           let bgClass = "bg-white border-[#CAF0F8]";
                           let textClass = "text-[#0077B6]";
                           let icon = null;
+                          let circleBgClass = isSelected ? 'bg-[#0077B6] text-white' : 'bg-[#CAF0F8] text-[#64748B]';
 
                           if (isQuizPreviewMode) {
-                            if (isSelected) {
-                              bgClass = "bg-[#CAF0F8] border-[#0077B6] ring-2 ring-[#0077B6]";
-                              textClass = "text-[#0077B6] font-bold";
+                            if (isCorrect) {
+                              bgClass = "bg-[#DCFCE7] border-[#86EFAC]";
+                              textClass = "text-[#166534] font-bold";
+                              circleBgClass = "bg-[#166534] text-white";
+                              icon = <CheckCircle className="w-5 h-5 text-[#166534]" />;
+                            } else if (isSelected) {
+                              bgClass = "bg-[#FEE2E2] border-[#FCA5A5]";
+                              textClass = "text-[#991B1B] font-bold";
+                              circleBgClass = "bg-[#991B1B] text-white";
+                              icon = <XCircle className="w-5 h-5 text-[#991B1B]" />;
+                            } else {
+                              bgClass = "bg-white border-[#E2E8F0]";
+                              textClass = "text-[#64748B]";
+                              circleBgClass = "bg-[#F1F5F9] text-[#64748B]";
                             }
                           } else if (feedback === 'correct' && isCorrect) {
                             bgClass = "bg-[#D1FAE5] border-[#10B981] ring-2 ring-[#10B981]";
                             textClass = "text-[#065F46]";
-                            icon = <CheckCircle className="w-5 h-5" />;
+                            icon = <CheckCircle className="w-5 h-5 text-[#10B981]" />;
                           } else if (feedback === 'wrong') {
                             if (isSelected) {
                               bgClass = "bg-[#FEE2E2] border-[#EF4444]";
                               textClass = "text-[#991B1B]";
-                              icon = <XCircle className="w-5 h-5" />;
+                              icon = <XCircle className="w-5 h-5 text-[#EF4444]" />;
                             } else if (isCorrect) {
                               bgClass = "bg-[#D1FAE5] border-[#10B981]";
                               textClass = "text-[#065F46]";
@@ -1716,7 +1826,7 @@ export default function ProgressiveLearning() {
                               className={`group p-5 rounded-[2rem] border-2 text-left transition-all relative flex items-center justify-between ${bgClass} ${isQuizPreviewMode || feedback ? '' : 'hover:border-[#00B4D8] hover:shadow-lg'}`}
                             >
                               <div className="flex items-center gap-4">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-[#0077B6] text-white' : 'bg-[#CAF0F8] text-[#64748B]'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${circleBgClass}`}>
                                   {String.fromCharCode(65 + idx)}
                                 </div>
                                 <span className={`font-semibold ${textClass}`}>{option}</span>
@@ -1985,6 +2095,7 @@ export default function ProgressiveLearning() {
           template={pembelajaran.reflectionTemplate || "Standar"}
           pertanyaanKendala={pembelajaran.pertanyaanKendala}
           pertanyaanKesan={pembelajaran.pertanyaanKesan}
+          ueqQuestions={pembelajaran.ueqQuestions || []}
           onSuccess={() => setHasReflection(true)}
         />
       )}

@@ -303,12 +303,20 @@ export default function DataSiswaGuru() {
                     <div className="w-[243px] flex items-center gap-[12px]">
                       <div className="relative flex-shrink-0">
                         <div
-                          className="w-[40px] h-[40px] rounded-full flex items-center justify-center shadow-md"
+                          className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center shadow-md"
                           style={{ backgroundColor: student.color }}
                         >
-                          <p className="font-['Poppins'] font-bold text-[16px] text-white">
-                            {student.avatar}
-                          </p>
+                          {student.avatar && (student.avatar.startsWith("data:") || student.avatar.startsWith("http") || student.avatar.startsWith("/")) ? (
+                            <img 
+                              src={student.avatar} 
+                              alt={student.nama} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <p className="font-['Poppins'] font-bold text-[16px] text-white">
+                              {student.avatar}
+                            </p>
+                          )}
                         </div>
                         {student.isOnline ? (
                           <div className="absolute -bottom-0.5 -right-0.5 h-[12px] w-[12px] rounded-full bg-[#4ADE80] ring-2 ring-white" title="Online" />

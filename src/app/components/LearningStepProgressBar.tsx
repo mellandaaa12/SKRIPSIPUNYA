@@ -41,8 +41,13 @@ export function LearningStepProgressBar({ segments, className = "" }: Props) {
             className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[11px] leading-snug text-slate-700 shadow-lg group-hover:block"
           >
             <span className="block font-semibold text-slate-900">{seg.stepTitle}</span>
-            <span className="mt-1 block text-slate-600">Percobaan: {seg.attempts}</span>
+            {!seg.stepTitle.toUpperCase().includes("POST TEST") && (
+              <span className="mt-1 block text-slate-600">Percobaan: {seg.attempts}</span>
+            )}
             <span className="block text-slate-600">Status: {seg.statusLabel}</span>
+            {seg.completedAt && (
+              <span className="block text-slate-500 font-semibold mt-1">🕒 {seg.completedAt}</span>
+            )}
             {seg.needsAttention ? (
               <span className="mt-1 block font-medium text-red-600">Butuh perhatian guru</span>
             ) : null}

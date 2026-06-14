@@ -22,7 +22,7 @@ export type MacFolderVisualProps = {
   folderSubtitle?: string;
   imageUrl?: string;           // custom image uploaded by guru
   progressValue?: number;      // 0–100 for the progress bar (optional)
-  progressLabel?: string;      // label teks di sebelah badge (opsional, default "Complete")
+  progressLabel?: string;      // label teks di sebelah badge (opsional, default "Selesai")
   children?: ReactNode;
   className?: string;
 };
@@ -35,7 +35,7 @@ export function MacFolderVisual({
   themeIndex = 0,
   folderSubtitle,
   progressValue,
-  progressLabel = "Complete",
+  progressLabel = "Selesai",
   children,
   className = "",
 }: MacFolderVisualProps) {

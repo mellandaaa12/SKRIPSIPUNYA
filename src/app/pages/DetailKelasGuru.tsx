@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { SideBarGuru } from "../components/SideBarGuru";
 import { ProfileHeader } from "../components/ProfileHeader";
-import { Search, Plus, BookOpen, Users, AlertTriangle, Menu, LayoutDashboard, Activity as ActivityIcon, TrendingUp, ArrowLeft } from "lucide-react";
+import { Search, Plus, BookOpen, Users, AlertTriangle, Menu, LayoutDashboard, Activity as ActivityIcon, TrendingUp, ArrowLeft, Trash2 } from "lucide-react";
 import { MacFolderVisual } from "../components/MacFolderVisual";
 import { useSettings } from "../context/SettingsContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../utils/supabase";
 import { classAPI, userAPI, progressAPI, pembelajaranAPI, formatClassDisplayName } from "../utils/api";
 import { toast } from "sonner";
+import { translateError } from "../utils/errorTranslator";
 
 export default function DetailKelasGuru() {
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ export default function DetailKelasGuru() {
 
     const materi = pembelajaranList.find((p) => p.id === materiId);
     if (!materi || (materi.steps && materi.steps.length < 2)) {
-      toast.error("Materi harus memiliki minimal 2 step untuk dipublish!");
+      toast.error("Materi harus memiliki minimal 2 langkah untuk diterbitkan!");
       return;
     }
 
@@ -102,10 +103,10 @@ export default function DetailKelasGuru() {
       setPublishing(materiId);
       await pembelajaranAPI.update(materiId, { status: "published" });
       setPembelajaranList(prev => prev.map(p => p.id === materiId ? { ...p, status: "published" } : p));
-      toast.success("Materi berhasil dipublish");
+      toast.success("Materi berhasil diterbitkan");
     } catch (error: any) {
       console.error("Error publishing pembelajaran:", error);
-      toast.error("Terjadi kesalahan saat mempublish materi");
+      toast.error(translateError(error?.message || error) || "Terjadi kesalahan saat menerbitkan materi");
     } finally {
       setPublishing(null);
     }
@@ -116,12 +117,30 @@ export default function DetailKelasGuru() {
       setPublishing(materiId);
       await pembelajaranAPI.update(materiId, { status: "draft" });
       setPembelajaranList(prev => prev.map(p => p.id === materiId ? { ...p, status: "draft" } : p));
-      toast.success("Materi berhasil diunpublish");
+      toast.success("Materi berhasil dibatalkan terbitnya");
     } catch (error: any) {
       console.error("Error unpublishing pembelajaran:", error);
-      toast.error("Terjadi kesalahan saat mengunpublish materi");
+      toast.error(translateError(error?.message || error) || "Terjadi kesalahan saat membatalkan terbitan materi");
     } finally {
       setPublishing(null);
+    }
+  };
+
+  const handleDeleteMateri = async (materiId: string) => {
+    if (!session?.access_token) return;
+
+    try {
+      setLoading(true);
+      await pembelajaranAPI.delete(materiId, session.access_token);
+      
+      // Update state
+      setPembelajaranList((prev) => prev.filter((p) => p.id !== materiId));
+      toast.success(preferences.language === "en" ? "Material deleted successfully" : "Materi berhasil dihapus");
+    } catch (error: any) {
+      console.error("Error deleting pembelajaran:", error);
+      toast.error(translateError(error?.message || error) || (preferences.language === "en" ? "Error deleting material" : "Terjadi kesalahan saat menghapus materi"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,10 +155,7 @@ export default function DetailKelasGuru() {
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         void fetchData();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "student_progress" }, () => {
-        void fetchData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "student_progress_steps" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "progress" }, () => {
         void fetchData();
       })
       .subscribe();
@@ -192,8 +208,9 @@ export default function DetailKelasGuru() {
     return {
       ...siswa,
       name: siswa.name || siswa.email,
-      avatar: siswa.name?.charAt(0).toUpperCase() || 'S',
-      color: '#ffcb14',
+      avatar: siswa.avatar || null,
+      avatarColor: siswa.avatar_color || '#0077B6',
+      initials: (siswa.name || siswa.email)?.charAt(0).toUpperCase() || 'S',
       progressPercentage,
       averageScore,
       needsAttention,
@@ -474,48 +491,63 @@ export default function DetailKelasGuru() {
                         >
                           <MacFolderVisual
                             title={materiTitle}
-                            badge={`${stepCount} Materi`}
+                            badge={`${stepCount} Langkah`}
                             status={materi.status === "published" ? "published" : "draft"}
                             themeIndex={idx}
                             imageUrl={materi.image_url || materi.imageUrl || undefined}
                             className="w-full"
                           >
-                            {materi.steps && materi.steps.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              {materi.steps && materi.steps.length > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (materi.status === "draft") {
+                                      handlePublish(materi.id);
+                                    } else {
+                                      handleUnpublish(materi.id);
+                                    }
+                                  }}
+                                  disabled={publishing === materi.id}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 disabled:opacity-50 shadow-sm hover:shadow-md active:scale-95 animate-fadeIn"
+                                  style={{
+                                    background: materi.status === "draft" ? "#0077B6" : "#fff",
+                                    border: materi.status === "draft" ? "1.5px solid #0077B6" : "1.5px solid #E2E8F0",
+                                    color: materi.status === "draft" ? "#fff" : "#0077B6",
+                                  }}
+                                >
+                                  {publishing === materi.id ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
+                                      <span>...</span>
+                                    </>
+                                  ) : materi.status === "draft" ? (
+                                    <>
+                                      <TrendingUp className="w-3 h-3" />
+                                      <span>Terbitkan</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <TrendingUp className="w-3 h-3" />
+                                      <span>Batalkan Terbit</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                              
                               <button
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                   e.stopPropagation();
-                                  if (materi.status === "draft") {
-                                    handlePublish(materi.id);
-                                  } else {
-                                    handleUnpublish(materi.id);
+                                  if (confirm("Apakah Anda yakin ingin menghapus materi ini beserta seluruh langkah pembelajarannya?")) {
+                                    await handleDeleteMateri(materi.id);
                                   }
                                 }}
-                                disabled={publishing === materi.id}
-                                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 disabled:opacity-50 shadow-sm hover:shadow-md active:scale-95"
-                                style={{
-                                  background: materi.status === "draft" ? "#0077B6" : "#fff",
-                                  border: materi.status === "draft" ? "1.5px solid #0077B6" : "1.5px solid #90E0EF",
-                                  color: materi.status === "draft" ? "#fff" : "#0077B6",
-                                }}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95 animate-fadeIn"
                               >
-                                {publishing === materi.id ? (
-                                  <>
-                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
-                                    <span>...</span>
-                                  </>
-                                ) : materi.status === "draft" ? (
-                                  <>
-                                    <TrendingUp className="w-3 h-3" />
-                                    <span>Publish</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <TrendingUp className="w-3 h-3" />
-                                    <span>Unpublish</span>
-                                  </>
-                                )}
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Hapus</span>
                               </button>
-                            )}
+                            </div>
                           </MacFolderVisual>
                         </div>
                       );
@@ -557,18 +589,32 @@ export default function DetailKelasGuru() {
                         className="group flex items-center gap-4 p-4 rounded-2xl bg-white border border-[#E2E8F0]/80 hover:border-[#00B4D8]/50 hover:shadow-[0_8px_24px_-4px_rgba(0,119,182,0.12)] transition-all duration-300"
                       >
                         {/* Dynamic Avatar */}
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#D4ECF0] to-[#90E0EF] p-0.5 shadow-sm group-hover:shadow-md transition-all">
-                            <div className="w-full h-full bg-white rounded-full overflow-hidden">
-                              <img 
-                                src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(siswa.name)}&backgroundColor=transparent`} 
-                                alt={siswa.name} 
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
-                              />
+                        <div className="relative flex-shrink-0">
+                          <div 
+                            className="w-14 h-14 rounded-full p-0.5 shadow-sm group-hover:shadow-md transition-all flex items-center justify-center overflow-hidden"
+                            style={{ 
+                              background: siswa.avatar ? 'linear-gradient(to bottom right, #D4ECF0, #90E0EF)' : 'transparent'
+                            }}
+                          >
+                            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                              {siswa.avatar ? (
+                                <img 
+                                  src={siswa.avatar} 
+                                  alt={siswa.name} 
+                                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div 
+                                  className="w-full h-full flex items-center justify-center text-white text-lg font-bold font-['Poppins'] shadow-inner"
+                                  style={{ backgroundColor: siswa.avatarColor }}
+                                >
+                                  {siswa.initials}
+                                </div>
+                              )}
                             </div>
                           </div>
                           {siswa.isOnline && (
-                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm z-10"></div>
                           )}
                         </div>
 

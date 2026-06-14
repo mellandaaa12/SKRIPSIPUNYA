@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, CheckCircle2, PartyPopper, ExternalLink } from "lucide-react";
-import { submitRefleksi } from "../utils/api";
+import { X, CheckCircle2, PartyPopper, HelpCircle } from "lucide-react";
+import { submitRefleksi, submitUeqResponses } from "../utils/api";
 import { toast } from "sonner";
 
 interface RefleksiModalProps {
@@ -13,17 +13,17 @@ interface RefleksiModalProps {
   template: string;
   pertanyaanKendala?: string;
   pertanyaanKesan?: string;
+  ueqQuestions?: any[];
   onSuccess?: () => void;
 }
 
-export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanKendala, pertanyaanKesan, onSuccess }: RefleksiModalProps) {
+export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanKendala, pertanyaanKesan, ueqQuestions = [], onSuccess }: RefleksiModalProps) {
   const [pemahaman, setPemahaman] = useState("");
   const [kendala, setKendala] = useState("");
-  const [kesan, setKesan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // UEQ completion state
-  const [hasClickedUEQ, setHasClickedUEQ] = useState(false);
+  // Custom UEQ answers state
+  const [ueqAnswers, setUeqAnswers] = useState<Record<string, any>>({});
 
   // Parse template with delimiters
   const templateParts = template ? template.split("|||") : [];
@@ -32,23 +32,24 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
   const ueqUrl = templateParts[2] || "";
   const ueqDescription = templateParts[3] || "";
 
-  const isStandar = actualTemplate === "Standar";
-  const isSingkat = actualTemplate === "Singkat";
-  const isEmojiOnly = actualTemplate === "Emoji Only";
-
   const emojis = [
     { emoji: "😄", label: "Sangat Paham" },
     { emoji: "🙂", label: "Cukup Paham" },
     { emoji: "😕", label: "Kurang Paham" },
   ];
 
-  const needsKendala = isStandar || isSingkat;
-  const needsKesan = isStandar;
+  const needsKendala = pemahaman.includes("Kurang Paham");
+
+  const isAllUeqAnswered = !isUeqActive || ueqQuestions.every(q => {
+    const ans = ueqAnswers[q.id];
+    if (q.type === "scale") return typeof ans === "number";
+    return typeof ans === "string" && ans.trim().length > 0;
+  });
+
   const canSubmit =
     !!pemahaman &&
     (!needsKendala || kendala.trim().length > 0) &&
-    (!needsKesan || kesan.trim().length > 0) &&
-    (!isUeqActive || hasClickedUEQ);
+    isAllUeqAnswered;
 
   const handleSubmit = async () => {
     if (!pemahaman) {
@@ -61,13 +62,8 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
       return;
     }
 
-    if (needsKesan && !kesan.trim()) {
-      toast.error("Silakan isi kesan dan pendapat kamu!");
-      return;
-    }
-
-    if (isUeqActive && !hasClickedUEQ) {
-      toast.error("Silakan klik link kuesioner UEQ terlebih dahulu!");
+    if (isUeqActive && !isAllUeqAnswered) {
+      toast.error("Silakan lengkapi seluruh kuesioner UEQ terlebih dahulu!");
       return;
     }
 
@@ -77,15 +73,28 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
         materi_id: materiId,
         pemahaman,
         kendala: needsKendala ? kendala.trim() : undefined,
-        kesan: needsKesan ? kesan.trim() : undefined,
+        kesan: undefined,
       });
 
-      toast.success("Refleksi berhasil dikirim!");
+      if (isUeqActive && ueqQuestions.length > 0) {
+        const formattedAnswers = ueqQuestions.map(q => ({
+          questionId: q.id,
+          type: q.type,
+          label: q.label,
+          answer: ueqAnswers[q.id]
+        }));
+        await submitUeqResponses({
+          materi_id: materiId,
+          answers: formattedAnswers
+        });
+      }
+
+      toast.success("Refleksi dan evaluasi berhasil dikirim!");
       if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
       console.error("Gagal mengirim refleksi:", error);
-      toast.error("Gagal mengirim refleksi: " + (error.message || "Kesalahan sistem"));
+      toast.error("Gagal mengirim data: " + (error.message || "Kesalahan sistem"));
     } finally {
       setIsSubmitting(false);
     }
@@ -102,10 +111,10 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-[#0F172A]/80 backdrop-blur-md z-[100]"
             onClick={() => {
-              if (!isUeqActive || hasClickedUEQ) {
+              if (isAllUeqAnswered) {
                 onClose();
               } else {
-                toast.warning("Harap klik link kuesioner UEQ terlebih dahulu!");
+                toast.warning("Harap lengkapi kuesioner UEQ terlebih dahulu!");
               }
             }}
           />
@@ -117,7 +126,7 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
           >
             {/* Header Area */}
             <div className="bg-gradient-to-br from-[#eff6ff] to-[#dbeafe] p-8 text-center relative border-b border-[#bfdbfe]/50">
-              {(!isUeqActive || hasClickedUEQ) && (
+              {(isAllUeqAnswered) && (
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/50 text-[#64748b] hover:bg-white transition-colors"
@@ -160,7 +169,7 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
                 </div>
               </div>
 
-              {(isStandar || isSingkat) && (
+              {needsKendala && (
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-[#0077B6] mb-2">
                     {pertanyaanKendala || "Apa kendala yang kamu alami?"}
@@ -175,63 +184,120 @@ export function RefleksiModal({ isOpen, onClose, materiId, template, pertanyaanK
                 </div>
               )}
 
-              {isStandar && (
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-[#0077B6] mb-2">
-                    {pertanyaanKesan || "Bagaimana pendapatmu tentang pembelajaran hari ini?"}
-                  </label>
-                  <textarea
-                    value={kesan}
-                    onChange={(e) => setKesan(e.target.value)}
-                    placeholder="Tulis kesan dan pesanmu..."
-                    rows={2}
-                    className="w-full p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent transition-all resize-none text-sm placeholder:text-[#94a3b8] text-[#1e293b]"
-                  />
-                </div>
-              )}
-
-              {/* ── SEKSI EVALUASI UEQ (GOOGLE FORM) ── */}
-              {isUeqActive && (
-                <div className="mb-8 p-6 bg-gradient-to-br from-[#eff6ff] to-[#f5f3ff] rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-                  
-                  <div className="flex items-center gap-2 mb-3">
+              {/* ── SEKSI EVALUASI UEQ (NATIVE RESPONDER FORM) ── */}
+              {isUeqActive && ueqQuestions.length > 0 && (
+                <div className="mb-8 p-6 bg-gradient-to-br from-[#f8fafc] to-[#eff6ff] rounded-3xl border border-[#dbeafe] shadow-md relative overflow-visible">
+                  <div className="flex items-center gap-2.5 mb-4">
                     <span className="text-xl">📊</span>
                     <h4 className="font-extrabold text-sm text-[#0077B6] uppercase tracking-wider">
-                      Evaluasi Media (Kuesioner UEQ)
+                      Evaluasi Pengalaman Pengguna (UEQ)
                     </h4>
                   </div>
                   
-                  <p className="text-xs text-[#475569] leading-relaxed mb-4 font-semibold">
+                  <p className="text-xs text-[#64748B] leading-relaxed mb-6 font-medium bg-white p-3 rounded-2xl border border-[#e2e8f0]">
                     {ueqDescription || "Mohon luangkan waktu Anda sejenak untuk mengisi kuesioner UEQ guna mengevaluasi pengalaman penggunaan media pembelajaran ini."}
                   </p>
-                  
-                  <a
-                    href={ueqUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      setHasClickedUEQ(true);
-                      toast.success("Membuka Google Form UEQ... Terima kasih telah mengisi!");
-                    }}
-                    className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all shadow-md ${
-                      hasClickedUEQ
-                        ? "bg-[#10B981] shadow-emerald-500/20 hover:bg-[#059669]"
-                        : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/20 hover:scale-[1.02]"
-                    }`}
-                  >
-                    <span>{hasClickedUEQ ? "✓ Kuesioner UEQ Telah Dibuka" : "Buka Kuesioner UEQ (Google Form)"}</span>
-                    {!hasClickedUEQ && <ExternalLink className="w-4 h-4" />}
-                  </a>
-                  
-                  <div className="mt-3">
-                    {hasClickedUEQ ? (
-                      <p className="text-[11px] font-bold text-[#10B981] flex items-center gap-1">
-                        ✓ Terima kasih! Sekarang Anda dapat mengirim refleksi dan menutup modal.
+
+                  <div className="flex flex-col gap-6">
+                    {ueqQuestions.map((q, idx) => {
+                      const answer = ueqAnswers[q.id];
+                      return (
+                        <div key={q.id} className="flex flex-col gap-2.5">
+                          <label className="block text-xs font-bold text-[#1e293b] leading-normal">
+                            {idx + 1}. {q.label} <span className="text-red-500">*</span>
+                          </label>
+
+                          {q.type === 'scale' && (
+                            <div className="flex justify-between items-center px-4 py-5 bg-white rounded-3xl border border-[#e2e8f0] shadow-sm gap-2">
+                              {/* Min Label */}
+                              {q.minLabel && q.minLabel.trim() ? (
+                                <div className="flex flex-col items-start max-w-[22%]">
+                                  <span className="text-[10px] font-bold text-amber-600 uppercase text-left leading-tight break-words" title={q.minLabel}>
+                                    {q.minLabel}
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              {/* Scale Options Grid */}
+                              <div className="flex justify-center items-center gap-3 sm:gap-4 flex-1">
+                                {(() => {
+                                  const minScale = q.minScale !== undefined ? q.minScale : 1;
+                                  const maxScale = q.maxScale !== undefined ? q.maxScale : 7;
+                                  const count = maxScale - minScale + 1;
+                                  return Array.from({ length: count > 0 ? count : 7 }).map((_, numIdx) => {
+                                    const val = minScale + numIdx;
+                                    const isSelected = answer === val;
+                                    return (
+                                      <div 
+                                        key={val} 
+                                        onClick={() => setUeqAnswers(prev => ({ ...prev, [q.id]: val }))}
+                                        className="flex flex-col items-center gap-2 cursor-pointer group"
+                                      >
+                                        {/* Number Label */}
+                                        <span className={`text-[11px] font-black transition-colors ${isSelected ? 'text-[#0077B6]' : 'text-slate-400 group-hover:text-[#0077B6]'}`}>
+                                          {val}
+                                        </span>
+                                        
+                                        {/* Outer Radio Circle */}
+                                        <div className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                          isSelected 
+                                            ? 'border-[#0077B6] bg-white scale-110 shadow-sm shadow-[#0077B6]/20' 
+                                            : 'border-slate-300 bg-white group-hover:border-[#0077B6]'
+                                        }`}>
+                                          {/* Inner Selected Dot */}
+                                          <div className={`w-2.5 h-2.5 rounded-full transition-all ${
+                                            isSelected ? 'bg-[#0077B6] scale-100' : 'bg-transparent scale-50'
+                                          }`} />
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+
+                              {/* Max Label */}
+                              {q.maxLabel && q.maxLabel.trim() ? (
+                                <div className="flex flex-col items-end max-w-[22%] text-right">
+                                  <span className="text-[10px] font-bold text-emerald-600 uppercase text-right leading-tight break-words" title={q.maxLabel}>
+                                    {q.maxLabel}
+                                  </span>
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
+
+                          {q.type === 'text' && (
+                            <input
+                              type="text"
+                              value={answer || ""}
+                              onChange={(e) => setUeqAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                              placeholder="Ketik jawaban singkat Anda..."
+                              className="w-full p-3.5 bg-white border border-[#e2e8f0] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#3b82f6] text-xs text-[#1e293b]"
+                            />
+                          )}
+
+                          {q.type === 'paragraph' && (
+                            <textarea
+                              value={answer || ""}
+                              onChange={(e) => setUeqAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                              placeholder="Ketik umpan balik lengkap Anda..."
+                              rows={3}
+                              className="w-full p-3.5 bg-white border border-[#e2e8f0] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#3b82f6] text-xs text-[#1e293b] resize-none"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4">
+                    {isAllUeqAnswered ? (
+                      <p className="text-[10px] font-bold text-[#10B981] flex items-center gap-1">
+                        ✓ Seluruh kuesioner UEQ telah dijawab. Terima kasih!
                       </p>
                     ) : (
-                      <p className="text-[11px] font-bold text-amber-600 flex items-center gap-1 animate-pulse">
-                        ⚠️ Wajib: Klik tombol di atas untuk membuka kuesioner sebelum mengirim!
+                      <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1 animate-pulse">
+                        ⚠️ Harap lengkapi semua pertanyaan kuesioner di atas!
                       </p>
                     )}
                   </div>

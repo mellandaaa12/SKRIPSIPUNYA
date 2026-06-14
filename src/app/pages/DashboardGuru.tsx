@@ -84,29 +84,46 @@ export default function DashboardGuru() {
   };
 
   const fetchStudentsNeedingHelp = async () => {
-    if (!session?.access_token || !user?.id) return;
+    if (!session?.access_token || !user?.id || kelasList.length === 0) return;
     try {
       setLoadingHelpAlerts(true);
-      // Fetch all progress data for relevant students
-      const { data: progressData } = await supabase
+      
+      const classIds = kelasList.map((k: any) => k.id);
+      
+      // 1. Fetch student profiles in the classes taught by the teacher
+      const { data: students } = await supabase
+        .from("profiles")
+        .select("id,name,email,class_id")
+        .eq("role", "siswa")
+        .in("class_id", classIds);
+
+      const studentIds = (students || []).map((s: any) => s.id);
+      if (studentIds.length === 0) {
+        setStudentsNeedingHelp([]);
+        return;
+      }
+
+      // 2. Fetch progress data for these student IDs
+      const { data: progressRows } = await supabase
         .from('progress')
-        .select('*, profiles(name, email, class_id)');
-      
-      const guruKelasIds = kelasList.map(k => k.id);
-      
+        .select('id,user_id,pembelajaran_id,step_id,updated_at,score,answers,completed')
+        .in('user_id', studentIds);
+
+      const studentById = new Map((students || []).map((s: any) => [s.id, s]));
       const studentsInNeedMap = new Map();
 
-      (progressData || []).forEach((p: any) => {
-        const studentClassId = p.profiles?.class_id;
-        if (guruKelasIds.includes(studentClassId)) {
+      (progressRows || []).forEach((p: any) => {
+        const student = studentById.get(p.user_id);
+        if (student) {
           const attempts = Number(p.answers?.attempts || 0);
           const needsHelp = p.answers?.needs_help === true;
           const lowScore = typeof p.score === 'number' && p.score < 60;
 
           if (needsHelp || attempts >= 3 || lowScore) {
-            // Keep the most recent record for each user if needed, or just count unique users
+            // Keep the most recent record for each user, or just count unique users
             studentsInNeedMap.set(p.user_id, {
               ...p,
+              profiles: student,
               reason: needsHelp ? 'Butuh Bantuan' : attempts >= 3 ? '3x Gagal' : 'Nilai Rendah'
             });
           }
@@ -145,10 +162,10 @@ export default function DashboardGuru() {
           .select("id,user_id,pembelajaran_id,step_id,updated_at,score,answers,completed")
           .in("user_id", studentIds)
           .order("updated_at", { ascending: false })
-          .limit(100),
+          .limit(200),
         supabase
           .from("pembelajaran")
-          .select("id,judul,title,class_id")
+          .select("id,judul,title,class_id,steps")
           .in("class_id", classIds),
       ]);
 
@@ -184,7 +201,7 @@ export default function DashboardGuru() {
           isOnline: checkOnline(siswa?.updated_at),
         };
       });
-      setStudentActivities(normalized.slice(0, 25));
+      setStudentActivities(normalized.slice(0, 150));
     } catch (error) {
       console.error("Error fetching student activities:", error);
       setStudentActivities([]);
@@ -454,30 +471,6 @@ export default function DashboardGuru() {
             </div>
           </div>
 
-          {/* Students Needing Help Alert */}
-          {studentsNeedingHelp.length > 0 && (
-            <div className="mb-6 bg-[#90E0EF] backdrop-blur-16 border-2 border-[#0077B6] rounded-[2.5rem] p-6 shadow-[0_8px_32px_-4px_rgba(0,119,182,0.1)] animate-slideIn">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-[#395886]" />
-                <h3 className="font-bold text-lg text-[#395886]">
-                  {studentsNeedingHelp.length} Siswa Butuh Bantuan
-                </h3>
-              </div>
-              <div className="flex flex-col gap-2">
-                {studentsNeedingHelp.map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between bg-white/80 rounded-xl p-3">
-                    <div>
-                      <p className="font-semibold text-sm text-[#395886]">{item.profiles?.name || 'Siswa'}</p>
-                      <p className="text-xs text-[#64748B]">{item.profiles?.email || ''}</p>
-                    </div>
-                    <span className="text-xs font-semibold text-[#0077B6] bg-[#00B4D8] px-3 py-1 rounded-full">
-                      {item.reason || 'Perlu Perhatian'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

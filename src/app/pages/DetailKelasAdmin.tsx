@@ -185,12 +185,19 @@ export default function DetailKelasAdmin() {
           status = "active";
         }
 
+        const latestProgressTime = rows.length > 0
+          ? Math.max(...rows.map((r) => new Date(r.updated_at || r.created_at).getTime()))
+          : null;
+        const lastActivity = latestProgressTime
+          ? new Date(latestProgressTime).toISOString()
+          : (s.updated_at || s.created_at || new Date().toISOString());
+
         return {
           id: s.id,
           name: s.name || s.email,
           email: s.email,
           progress: Math.min(100, Math.max(0, progressPct)),
-          last_activity: s.updated_at || s.created_at || new Date().toISOString(),
+          last_activity: lastActivity,
           status: status,
           assignments_completed: completed,
           assignments_total: totalStepsClass,
