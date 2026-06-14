@@ -334,3 +334,115 @@
     color: var(--admin-primary) !important;
   }
 }
+
+/* ── Materi Content: tampilan HTML dari Tiptap editor ──────────────────── */
+/* Dipakai oleh siswa di BacaMateri.tsx dan ProgressiveLearning.tsx        */
+.materi-content ul,
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.75em !important;
+  margin: 0.5em 0 !important;
+}
+
+.materi-content ol,
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.75em !important;
+  margin: 0.5em 0 !important;
+}
+
+.materi-content li,
+.prose li {
+  display: list-item !important;
+  margin: 0.3em 0 !important;
+  padding-left: 0.25em !important;
+}
+
+.materi-content ul ul,
+.prose ul ul {
+  list-style-type: circle !important;
+}
+
+.materi-content ul ul ul,
+.prose ul ul ul {
+  list-style-type: square !important;
+}
+
+.materi-content ol ol,
+.prose ol ol {
+  list-style-type: lower-alpha !important;
+}
+
+.materi-content li p,
+.prose li p {
+  margin: 0 !important;
+}
+
+.materi-content h1, .prose h1 { font-size: 1.75em; font-weight: 700; margin: 0.75em 0 0.4em; color: #0077B6; }
+.materi-content h2, .prose h2 { font-size: 1.4em; font-weight: 600; margin: 0.75em 0 0.4em; color: #0077B6; }
+.materi-content h3, .prose h3 { font-size: 1.15em; font-weight: 600; margin: 0.5em 0 0.3em; color: #1e293b; }
+.materi-content p, .prose p { margin: 0.5em 0; line-height: 1.7; }
+.materi-content strong, .prose strong { font-weight: 700; }
+.materi-content em, .prose em { font-style: italic; }
+.materi-content blockquote, .prose blockquote {
+  border-left: 4px solid #00B4D8;
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: #475569;
+  background: #f0f9ff;
+  border-radius: 0 8px 8px 0;
+  padding: 0.75em 1em;
+}
+.materi-content pre, .prose pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-size: 0.85em;
+}
+.materi-content code, .prose code {
+  background: #f1f5f9;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: 'Courier New', Courier, monospace;
+  color: #0077B6;
+}
+.materi-content pre code, .prose pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+.materi-content table, .prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+}
+.materi-content td, .materi-content th,
+.prose td, .prose th {
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.materi-content th, .prose th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+.materi-content img, .prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.5em auto;
+  display: block;
+}
+.materi-content a, .prose a {
+  color: #0077B6;
+  text-decoration: underline;
+}
+.materi-content a:hover, .prose a:hover {
+  color: #00B4D8;
+}

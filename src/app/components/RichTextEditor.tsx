@@ -323,6 +323,37 @@ function RichTextEditorInner({
           font-size: 0.8rem;
           padding: 0;
         }
+        /* ── List Styles ─────────────────────────────────────────────── */
+        .ProseMirror ul {
+          list-style-type: disc;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+        }
+        .ProseMirror li {
+          margin: 0.25em 0;
+          padding-left: 0.25em;
+          display: list-item;
+        }
+        .ProseMirror ul ul {
+          list-style-type: circle;
+          margin: 0.25em 0;
+        }
+        .ProseMirror ul ul ul {
+          list-style-type: square;
+        }
+        .ProseMirror ol ol {
+          list-style-type: lower-alpha;
+          margin: 0.25em 0;
+        }
+        .ProseMirror li p {
+          margin: 0;
+        }
+        /* ── Image Styles ────────────────────────────────────────────── */
         .ProseMirror img {
           display: block;
           margin-left: auto;
