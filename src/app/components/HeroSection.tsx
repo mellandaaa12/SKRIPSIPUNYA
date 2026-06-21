@@ -173,29 +173,7 @@ export default function HeroSection({ onLoginClick }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "48px",
-          marginTop: "60px",
-          flexWrap: "wrap",
-        }}>
-          {[
-            { label: "Modul Belajar", value: "150+", icon: "📝" },
-            { label: "Latihan Soal", value: "500+", icon: "✏️" },
-            { label: "Mata Pelajaran", value: "20+", icon: "📚" },
-          ].map((stat) => (
-            <div key={stat.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-              <span style={{ fontFamily: "Poppins, sans-serif", fontWeight: 800, fontSize: "1.7rem", color: "#1A1A2E", lineHeight: 1 }}>
-                {stat.icon} {stat.value}
-              </span>
-              <span style={{ fontFamily: "Nunito, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#4A4A6A", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                {stat.label}
-              </span>
-            </div>
-          ))}
-        </div>
+
       </div>
 
       {/* Scroll indicator */}
